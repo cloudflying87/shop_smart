@@ -1,0 +1,46 @@
+# Core Django
+Django==4.2.9
+
+# Database
+psycopg2-binary==2.9.9
+dj-database-url==2.1.0
+
+# REST API
+djangorestframework==3.14.0
+django-filter==23.5
+
+# Forms
+django-crispy-forms==2.1
+crispy-bootstrap5==2023.10
+
+# Caching
+django-redis==5.4.0
+redis==5.0.1
+
+# Image processing
+Pillow==10.1.0
+
+# HTTP requests for external APIs
+requests==2.31.0
+
+# WSGI server
+gunicorn==21.2.0
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+
+# Code quality
+black==23.11.0
+flake8==6.1.0
+isort==5.12.0
+
+# Production utilities
+whitenoise==6.6.0  # Static files serving
+sentry-sdk==1.38.0  # Error tracking
+
+# Development tools
+django-debug-toolbar==4.2.0
