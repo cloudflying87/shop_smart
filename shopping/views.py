@@ -15,8 +15,67 @@ from .models import (
     ShoppingList, ShoppingListItem, StoreLocation,
     FamilyItemUsage, ProductCategory, ItemStoreInfo
 )
-from .forms import ShoppingListForm, FamilyForm, GroceryStoreForm
+from .forms import (
+    ShoppingListForm, FamilyForm, GroceryStoreForm, GroceryItemForm,
+    StoreLocationForm, ShoppingListItemForm, UserProfileForm, FamilyMemberForm
+)
 from .recommender import ShoppingRecommender
+
+# Store Location Views
+class AddStoreLocationView(LoginRequiredMixin, CreateView):
+    model = StoreLocation
+    form_class = StoreLocationForm
+    template_name = 'groceries/stores/add_location.html'
+    
+    def get_success_url(self):
+        return reverse('groceries:store_detail', kwargs={'pk': self.kwargs['store_id']})
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        store = get_object_or_404(GroceryStore, pk=self.kwargs['store_id'])
+        kwargs['store'] = store
+        return kwargs
+    
+    def form_valid(self, form):
+        store = get_object_or_404(GroceryStore, pk=self.kwargs['store_id'])
+        form.instance.store = store
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['store'] = get_object_or_404(GroceryStore, pk=self.kwargs['store_id'])
+        return context
+
+class EditStoreLocationView(LoginRequiredMixin, UpdateView):
+    model = StoreLocation
+    form_class = StoreLocationForm
+    template_name = 'groceries/stores/edit_location.html'
+    
+    def get_success_url(self):
+        return reverse('groceries:store_detail', kwargs={'pk': self.kwargs['store_id']})
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        store = get_object_or_404(GroceryStore, pk=self.kwargs['store_id'])
+        kwargs['store'] = store
+        return kwargs
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['store'] = get_object_or_404(GroceryStore, pk=self.kwargs['store_id'])
+        return context
+
+class DeleteStoreLocationView(LoginRequiredMixin, DeleteView):
+    model = StoreLocation
+    template_name = 'groceries/stores/delete_location.html'
+    
+    def get_success_url(self):
+        return reverse('groceries:store_detail', kwargs={'pk': self.kwargs['store_id']})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['store'] = get_object_or_404(GroceryStore, pk=self.kwargs['store_id'])
+        return context
 
 # Dashboard View
 class DashboardView(LoginRequiredMixin, TemplateView):

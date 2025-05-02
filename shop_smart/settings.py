@@ -1,18 +1,23 @@
-
-
 import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
+from dotenv import load_dotenv
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / '.env')
+
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-development-key-change-in-production')
 
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
-
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -33,6 +38,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add whitenoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -59,30 +65,18 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'shopsmart.wsgi.application'
-
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-# Use PostgreSQL in production, SQLite for development
-if 'DATABASE_URL' in os.environ:
-    import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.config(
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+WSGI_APPLICATION = 'shop_smart.wsgi.application'
+DATABASES = {
+    'default': {
+        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.environ.get('DB_NAME', 'shopsmart'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
+        'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '600')),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-
-# Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -104,14 +98,15 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-MEDIA_URL = 'media/'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -126,7 +121,6 @@ MESSAGE_TAGS = {
     messages.WARNING: 'alert-warning',
     messages.ERROR: 'alert-danger',
 }
-
 
 LOGIN_REDIRECT_URL = 'groceries:dashboard'
 LOGIN_URL = 'login'
@@ -170,7 +164,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs/django.log',
+            'filename': '/app/logs/django.log' if os.path.exists('/app/logs') else os.path.join(BASE_DIR, 'logs/django.log'),
             'formatter': 'verbose',
         },
     },
@@ -180,7 +174,7 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'groceries': {
+        'shopping': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': False,
@@ -188,30 +182,56 @@ LOGGING = {
     },
 }
 
+# Create logs directory if it doesn't exist
 logs_dir = BASE_DIR / 'logs'
 if not os.path.exists(logs_dir):
     os.makedirs(logs_dir)
 
+# Cache configuration
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
 
-if 'REDIS_URL' in os.environ:
+# Use Redis cache if available
+REDIS_URL = os.environ.get('REDIS_URL')
+if REDIS_URL:
     CACHES['default'] = {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL'),
+        'LOCATION': REDIS_URL,
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
     }
 
-
+# Session settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
 SESSION_SAVE_EVERY_REQUEST = True
 
+# Email settings
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
+# PWA settings
+PWA_APP_NAME = os.environ.get('PWA_APP_NAME', 'ShopSmart')
+PWA_APP_SHORT_NAME = os.environ.get('PWA_APP_SHORT_NAME', 'ShopSmart')
+PWA_APP_DESCRIPTION = os.environ.get('PWA_APP_DESCRIPTION', 'Your personal grocery shopping assistant')
+PWA_APP_THEME_COLOR = os.environ.get('PWA_APP_THEME_COLOR', '#4CAF50')
+PWA_APP_BACKGROUND_COLOR = os.environ.get('PWA_APP_BACKGROUND_COLOR', '#FFFFFF')
+PWA_APP_DISPLAY = os.environ.get('PWA_APP_DISPLAY', 'standalone')
+PWA_APP_SCOPE = os.environ.get('PWA_APP_SCOPE', '/')
+PWA_APP_START_URL = os.environ.get('PWA_APP_START_URL', '/')
+
+# API Settings
+OPENFOODFACTS_USER_AGENT = os.environ.get('OPENFOODFACTS_USER_AGENT', 'ShopSmart - Django Shopping App')
+
+# Security settings
 if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True

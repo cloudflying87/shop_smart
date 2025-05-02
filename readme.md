@@ -33,6 +33,47 @@ ShopSmart is a Progressive Web Application (PWA) designed to simplify grocery sh
 
 ### Development Setup
 
+#### Method 1: Using Docker (Recommended)
+
+This method provides the closest environment to production:
+
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/shopsmart.git
+cd shopsmart
+```
+
+2. Set up environment variables
+```bash
+cp .env.example .env
+# Edit .env file with your configuration
+```
+
+3. Start PostgreSQL and the application with Docker Compose
+```bash
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+4. Apply migrations
+```bash
+docker-compose -f docker-compose.dev.yml exec web python manage.py migrate
+```
+
+5. Create a superuser
+```bash
+docker-compose -f docker-compose.dev.yml exec web python manage.py createsuperuser
+```
+
+6. Populate product database (optional)
+```bash
+docker-compose -f docker-compose.dev.yml exec web python manage.py populate_products --limit 100
+```
+
+The application will be available at http://localhost:8000
+pgAdmin will be available at http://localhost:5050
+
+#### Method 2: Manual Setup
+
 1. Clone the repository
 ```bash
 git clone https://github.com/yourusername/shopsmart.git
@@ -61,9 +102,9 @@ cp .env.example .env
 python manage.py migrate
 ```
 
-6. Import initial data (optional)
+6. Populate product database (optional)
 ```bash
-python manage.py import_products
+python manage.py populate_products --limit 100
 ```
 
 7. Run the development server
@@ -72,6 +113,8 @@ python manage.py runserver
 ```
 
 The application will be available at http://localhost:8000
+
+For more detailed instructions, see [Local Development Guide](local-development-guide.md)
 
 ## Production Deployment
 
@@ -210,4 +253,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - [Django](https://www.djangoproject.com/)
 - [WhiteNoise](http://whitenoise.evans.io/) for static file serving
-- [Open Food Facts](https://world.openfoodfacts.org/) for product data
+- [Open Food Facts](https://world.openfoodfacts.org/) for product datawhy d

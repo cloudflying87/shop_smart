@@ -4,14 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build/Test/Lint Commands
 
+### Standard Development
 - Run Django server: `python manage.py runserver`
 - Database migrations: `python manage.py migrate`
-- Run all tests: `pytest`
-- Run single test: `pytest shopping/tests.py::TestClassName::test_specific_function`
+- Make migrations: `python manage.py makemigrations`
+- Run all tests: `python manage.py test`
+- Run specific test module: `python manage.py test shopping.tests.test_models`
+- Run specific test class: `python manage.py test shopping.tests.test_models.FamilyModelTests`
+- Run specific test method: `python manage.py test shopping.tests.test_models.FamilyModelTests.test_family_creation`
 - Code formatting: `black .`
 - Lint checks: `flake8`
 - Import sorting: `isort .`
-- Import sample data: `python manage.py import_products`
+- Populate product database: `python manage.py populate_products --limit 100`
+
+### Docker Development
+- Start development services: `docker-compose -f docker-compose.dev.yml up -d`
+- Run migrations in container: `docker-compose -f docker-compose.dev.yml exec web python manage.py migrate`
+- Run tests in container: `docker-compose -f docker-compose.dev.yml exec web python manage.py test`
+- Create superuser in container: `docker-compose -f docker-compose.dev.yml exec web python manage.py createsuperuser`
+- View logs: `docker-compose -f docker-compose.dev.yml logs -f web`
 
 ## Code Style Guidelines
 
