@@ -7,6 +7,7 @@ from django.db.models import F, Count, Q
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, View
 )
+from django.views.generic.base import TemplateView
 from django.utils import timezone
 
 from .models import (
@@ -750,6 +751,10 @@ class UserProfileUpdateView(LoginRequiredMixin, UpdateView):
         response = super().form_valid(form)
         messages.success(self.request, 'Profile updated successfully')
         return response
+
+# Offline View
+class OfflineView(TemplateView):
+    template_name = 'shopping/offline.html'
 
 class BarcodeSearchView(LoginRequiredMixin, View):
     """API endpoint to search for items by barcode"""

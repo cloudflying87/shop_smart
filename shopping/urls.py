@@ -7,6 +7,9 @@ urlpatterns = [
     # Dashboard
     path('', views.DashboardView.as_view(), name='dashboard'),
     
+    # Offline page
+    path('offline/', views.OfflineView.as_view(), name='offline'),
+    
     # Shopping Lists
     path('lists/', views.ShoppingListListView.as_view(), name='lists'),
     path('lists/create/', views.ShoppingListCreateView.as_view(), name='create_list'),

@@ -1,8 +1,8 @@
 # Core Django
-Django==4.2.9
+Django==5.2
 
 # Database
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10
 dj-database-url==2.1.0
 
 # REST API
@@ -18,7 +18,7 @@ django-redis==5.4.0
 redis==5.0.1
 
 # Image processing
-Pillow==10.1.0
+Pillow==11.2.1
 
 # HTTP requests for external APIs
 requests==2.31.0
