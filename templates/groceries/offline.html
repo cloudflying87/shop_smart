@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Offline - ShopSmart{% endblock %}
+
+{% block content %}
+<div class="offline-page">
+    <div class="offline-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64">
+            <path fill="none" d="M0 0h24v24H0z"/>
+            <path d="M12 19c.946 0 1.81-.103 2.598-.281l-1.757-1.757c-.273.021-.55.038-.841.038-5.351 0-7.424-3.846-7.926-5a8.642 8.642 0 0 1 1.508-2.297L4.184 8.305c-1.538 1.667-2.121 3.346-2.132 3.379a.5.5 0 0 0 0 .632C2.073 12.383 4.367 19 12 19zm0-14c-1.837 0-3.346.396-4.604.981L3.707 2.293 2.293 3.707l18 18 1.414-1.414-3.319-3.319c2.614-1.951 3.547-4.615 3.561-4.657a.5.5 0 0 0 0-.632C21.927 11.617 19.633 5 12 5zm4.972 10.558l-2.28-2.28c.19-.39.308-.819.308-1.278 0-1.657-1.343-3-3-3-.459 0-.888.118-1.277.309L8.915 7.501A5.969 5.969 0 0 1 12 7c5.351 0 7.424 3.846 7.926 5-.302.692-1.166 2.342-2.954 3.558z" fill="currentColor"/>
+        </svg>
+    </div>
+    
+    <h1 class="offline-title">You're Offline</h1>
+    
+    <p class="offline-message">
+        It looks like you've lost your internet connection. Don't worry, ShopSmart is designed to work offline, so you can continue using most features.
+    </p>
+    
+    <div class="offline-features">
+        <h2>What you can do offline:</h2>
+        <ul>
+            <li>View your existing shopping lists</li>
+            <li>Check off items on your lists</li>
+            <li>Create new shopping lists (using locally cached items)</li>
+            <li>Edit existing items and lists</li>
+        </ul>
+    </div>
+    
+    <div class="offline-limitations">
+        <h2>What requires an internet connection:</h2>
+        <ul>
+            <li>Syncing changes with other family members</li>
+            <li>Searching for new products in the database</li>
+            <li>Adding new family members</li>
+            <li>Accessing account settings</li>
+        </ul>
+    </div>
+    
+    <div class="offline-action">
+        <button id="retry-connection" class="btn btn-primary">
+            Try Again
+        </button>
+        <a href="javascript:history.back()" class="btn btn-outline">
+            Go Back
+        </a>
+    </div>
+    
+    <div class="offline-status">
+        <div id="connection-status" class="status-indicator"></div>
+        <span id="status-text">Checking connection...</span>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Check if we're back online periodically
+    function checkConnection() {
+        const statusIndicator = document.getElementById('connection-status');
+        const statusText = document.getElementById('status-text');
+        
+        if (navigator.onLine) {
+            statusIndicator.classList.add('online');
+            statusText.textContent = 'You\'re back online!';
+            
+            // Wait a moment to show the user we're back online, then redirect
+            setTimeout(() => {
+                window.location.href = "{% url 'groceries:dashboard' %}";
+            }, 2000);
+        } else {
+            statusIndicator.classList.remove('online');
+            statusText.textContent = 'Still offline. Will keep checking...';
+        }
+    }
+    
+    // Check connection when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        checkConnection();
+        
+        // Set up retry button
+        const retryButton = document.getElementById('retry-connection');
+        retryButton.addEventListener('click', checkConnection);
+        
+        // Check every 5 seconds
+        setInterval(checkConnection, 5000);
+        
+        // Also check when the online/offline events fire
+        window.addEventListener('online', checkConnection);
+        window.addEventListener('offline', checkConnection);
+    });
+</script>
+{% endblock %}
+
+{% endblock %}

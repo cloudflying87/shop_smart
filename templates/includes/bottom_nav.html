@@ -1,4 +1,5 @@
 <!-- Bottom Navigation - Mobile Optimized -->
+{% load static %}
 <nav class="bottom-nav">
     <div class="bottom-nav-links">
         <a href="{% url 'groceries:dashboard' %}" class="bottom-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
