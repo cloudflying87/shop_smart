@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit {{ item.name }} | ShopSmart{% endblock %}
+
+{% block header_title %}Edit Item{% endblock %}
+
+{% block content %}
+<div class="edit-item-container">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Edit {{ item.name }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="form-section">
+                    <h3 class="section-title">Basic Information</h3>
+                    <div class="form-row">
+                        <div class="form-group col-md-8">
+                            {{ form.name|as_crispy_field }}
+                        </div>
+                        <div class="form-group col-md-4">
+                            {{ form.brand|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            {{ form.description|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="section-title">Categorization</h3>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            {{ form.category|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="section-title">Optional Details</h3>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            {{ form.barcode|as_crispy_field }}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form.image_url|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    {% if item.image_url %}
+                    <div class="current-image mt-2 mb-4">
+                        <p class="mb-2">Current Image:</p>
+                        <img src="{{ item.image_url }}" alt="{{ item.name }}" class="item-image-preview">
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{% url 'groceries:item_detail' pk=item.pk %}" class="btn btn-outline">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if store_info %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2 class="card-title">Store Information</h2>
+            <p class="text-muted">This item is available at the following stores</p>
+        </div>
+        <div class="card-body">
+            <div class="store-info-list">
+                <div class="store-info-row header">
+                    <div class="store-info-name">Store</div>
+                    <div class="store-info-location">Location</div>
+                    <div class="store-info-price">Price</div>
+                    <div class="store-info-actions">Actions</div>
+                </div>
+                
+                {% for info in store_info %}
+                <div class="store-info-row">
+                    <div class="store-info-name">{{ info.store.name }}</div>
+                    <div class="store-info-location">
+                        {% if info.location %}
+                        {{ info.location.name }}
+                        {% else %}
+                        <span class="text-muted">Not specified</span>
+                        {% endif %}
+                    </div>
+                    <div class="store-info-price">
+                        {% if info.last_price %}
+                        ${{ info.last_price }}
+                        {% else %}
+                        <span class="text-muted">Unknown</span>
+                        {% endif %}
+                    </div>
+                    <div class="store-info-actions">
+                        <button class="btn btn-sm btn-outline edit-store-info-btn" 
+                                data-store-id="{{ info.store.id }}"
+                                data-store-name="{{ info.store.name }}"
+                                data-location-id="{{ info.location.id|default:'' }}"
+                                data-price="{{ info.last_price|default:'' }}">
+                            Edit
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Edit Store Info Modal -->
+<div class="modal" id="editStoreInfoModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Edit Store Information</h2>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="store-info-form">
+                {% csrf_token %}
+                <input type="hidden" id="store-id" name="store_id">
+                
+                <div class="form-group">
+                    <label for="store-name">Store:</label>
+                    <input type="text" id="store-name" class="form-control" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="location-select">Location:</label>
+                    <select id="location-select" name="location_id" class="form-control">
+                        <option value="">Select a location</option>
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="price-input">Price:</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">$</span>
+                        </div>
+                        <input type="number" id="price-input" name="price" class="form-control" min="0" step="0.01">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="closeStoreInfoModal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveStoreInfo">Save Changes</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-item-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .item-image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--border-light);
+        padding: 0.5rem;
+        background-color: var(--bg-secondary);
+    }
+    
+    .store-info-list {
+        border: 1px solid var(--border-light);
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
+    }
+    
+    .store-info-row {
+        display: grid;
+        grid-template-columns: 2fr 2fr 1fr 1fr;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .store-info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .store-info-row.header {
+        background-color: var(--bg-secondary);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .store-info-actions {
+        text-align: right;
+    }
+    
+    @media (max-width: 768px) {
+        .store-info-row {
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+        
+        .store-info-row.header {
+            display: none;
+        }
+        
+        .store-info-row > div {
+            position: relative;
+            padding-top: 1.5rem;
+        }
+        
+        .store-info-row > div::before {
+            content: attr(class);
+            text-transform: capitalize;
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+        
+        .store-info-name::before {
+            content: "Store";
+        }
+        
+        .store-info-location::before {
+            content: "Location";
+        }
+        
+        .store-info-price::before {
+            content: "Price";
+        }
+        
+        .store-info-actions::before {
+            content: "Actions";
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Edit Store Info Modal functionality
+        const editStoreInfoModal = document.getElementById('editStoreInfoModal');
+        const closeStoreInfoModal = document.getElementById('closeStoreInfoModal');
+        const editStoreInfoOverlay = editStoreInfoModal.querySelector('.modal-overlay');
+        const editStoreInfoClose = editStoreInfoModal.querySelector('.modal-close');
+        const saveStoreInfo = document.getElementById('saveStoreInfo');
+        
+        // Store locations by store ID
+        const storeLocations = {
+            {% for store in all_stores %}
+            "{{ store.id }}": [
+                {% for location in store.locations.all %}
+                { id: "{{ location.id }}", name: "{{ location.name }}" },
+                {% endfor %}
+            ],
+            {% endfor %}
+        };
+        
+        // Show edit modal & populate form
+        document.querySelectorAll('.edit-store-info-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const storeId = this.getAttribute('data-store-id');
+                const storeName = this.getAttribute('data-store-name');
+                const locationId = this.getAttribute('data-location-id');
+                const price = this.getAttribute('data-price');
+                
+                // Populate form fields
+                document.getElementById('store-id').value = storeId;
+                document.getElementById('store-name').value = storeName;
+                document.getElementById('price-input').value = price;
+                
+                // Populate location dropdown
+                const locationSelect = document.getElementById('location-select');
+                locationSelect.innerHTML = '<option value="">Select a location</option>';
+                
+                if (storeLocations[storeId]) {
+                    storeLocations[storeId].forEach(location => {
+                        const option = document.createElement('option');
+                        option.value = location.id;
+                        option.textContent = location.name;
+                        if (location.id === locationId) {
+                            option.selected = true;
+                        }
+                        locationSelect.appendChild(option);
+                    });
+                }
+                
+                // Show modal
+                editStoreInfoModal.classList.add('active');
+            });
+        });
+        
+        // Close edit modal
+        [closeStoreInfoModal, editStoreInfoOverlay, editStoreInfoClose].forEach(element => {
+            if (element) {
+                element.addEventListener('click', function() {
+                    editStoreInfoModal.classList.remove('active');
+                });
+            }
+        });
+        
+        // Handle save store info
+        if (saveStoreInfo) {
+            saveStoreInfo.addEventListener('click', function() {
+                const storeId = document.getElementById('store-id').value;
+                const locationId = document.getElementById('location-select').value;
+                const price = document.getElementById('price-input').value;
+                
+                // Create form data for the request
+                const formData = new FormData();
+                formData.append('store_id', storeId);
+                formData.append('location_id', locationId);
+                formData.append('price', price);
+                
+                // Send AJAX request
+                fetch(`/groceries/items/{{ item.id }}/store-info/update/`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        editStoreInfoModal.classList.remove('active');
+                        
+                        // Show success notification
+                        alert('Store information updated successfully');
+                        
+                        // Reload the page to reflect changes
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

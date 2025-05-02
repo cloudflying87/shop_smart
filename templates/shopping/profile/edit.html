@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Profile | ShopSmart{% endblock %}
+
+{% block header_title %}Edit Profile{% endblock %}
+
+{% block content %}
+<div class="edit-profile-container">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Edit Your Profile</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="form-section">
+                    <h3 class="section-title">Default Family</h3>
+                    <p class="section-help">Choose which family is selected by default when creating shopping lists</p>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            {{ form.default_family|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="section-title">Appearance</h3>
+                    <p class="section-help">Customize how the app looks</p>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            {{ form.dark_mode|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{% url 'groceries:profile' %}" class="btn btn-outline">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2 class="card-title">Account Information</h2>
+        </div>
+        <div class="card-body">
+            <div class="account-info">
+                <div class="account-info-item">
+                    <div class="account-info-label">Username</div>
+                    <div class="account-info-value">{{ user.username }}</div>
+                </div>
+                
+                <div class="account-info-item">
+                    <div class="account-info-label">Email Address</div>
+                    <div class="account-info-value">{{ user.email }}</div>
+                </div>
+                
+                <div class="account-info-item">
+                    <div class="account-info-label">Full Name</div>
+                    <div class="account-info-value">{{ user.get_full_name|default:"Not set" }}</div>
+                </div>
+                
+                <div class="account-info-item">
+                    <div class="account-info-label">Member Since</div>
+                    <div class="account-info-value">{{ user.date_joined|date:"F j, Y" }}</div>
+                </div>
+            </div>
+            
+            <div class="account-actions mt-4">
+                <button class="btn btn-outline" id="changePasswordBtn">Change Password</button>
+                {% if user.email %}
+                <button class="btn btn-outline" id="changeEmailBtn">Change Email</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal" id="changePasswordModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Change Password</h2>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'groceries:change_password' %}" id="password-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="current-password">Current Password</label>
+                    <input type="password" id="current-password" name="current_password" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password1">New Password</label>
+                    <input type="password" id="new-password1" name="new_password1" class="form-control" required>
+                    <small class="form-text text-muted">
+                        Your password must contain at least 8 characters and can't be too common.
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label for="new-password2">Confirm New Password</label>
+                    <input type="password" id="new-password2" name="new_password2" class="form-control" required>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="closePasswordModal">Cancel</button>
+            <button type="submit" form="password-form" class="btn btn-primary">Change Password</button>
+        </div>
+    </div>
+</div>
+
+<!-- Change Email Modal -->
+<div class="modal" id="changeEmailModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Change Email Address</h2>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'groceries:change_email' %}" id="email-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="current-email">Current Email</label>
+                    <input type="email" id="current-email" value="{{ user.email }}" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="new-email">New Email</label>
+                    <input type="email" id="new-email" name="new_email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                    <small class="form-text text-muted">
+                        Please enter your password to confirm this change.
+                    </small>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="closeEmailModal">Cancel</button>
+            <button type="submit" form="email-form" class="btn btn-primary">Change Email</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    
+    .section-help {
+        color: var(--text-tertiary);
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .account-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .account-info-item {
+        display: flex;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .account-info-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .account-info-label {
+        width: 180px;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+    
+    .account-info-value {
+        flex: 1;
+    }
+    
+    .account-actions {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    @media (max-width: 576px) {
+        .account-info-item {
+            flex-direction: column;
+        }
+        
+        .account-info-label {
+            width: 100%;
+            margin-bottom: 0.25rem;
+        }
+        
+        .account-actions {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .account-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Change Password Modal functionality
+        const changePasswordModal = document.getElementById('changePasswordModal');
+        const changePasswordBtn = document.getElementById('changePasswordBtn');
+        const closePasswordModal = document.getElementById('closePasswordModal');
+        const passwordOverlay = changePasswordModal.querySelector('.modal-overlay');
+        const passwordClose = changePasswordModal.querySelector('.modal-close');
+        
+        // Show modal
+        if (changePasswordBtn) {
+            changePasswordBtn.addEventListener('click', function() {
+                changePasswordModal.classList.add('active');
+            });
+        }
+        
+        // Close modal
+        [closePasswordModal, passwordOverlay, passwordClose].forEach(element => {
+            if (element) {
+                element.addEventListener('click', function() {
+                    changePasswordModal.classList.remove('active');
+                });
+            }
+        });
+        
+        // Change Email Modal functionality
+        const changeEmailModal = document.getElementById('changeEmailModal');
+        const changeEmailBtn = document.getElementById('changeEmailBtn');
+        const closeEmailModal = document.getElementById('closeEmailModal');
+        const emailOverlay = changeEmailModal.querySelector('.modal-overlay');
+        const emailClose = changeEmailModal.querySelector('.modal-close');
+        
+        // Show modal
+        if (changeEmailBtn) {
+            changeEmailBtn.addEventListener('click', function() {
+                changeEmailModal.classList.add('active');
+            });
+        }
+        
+        // Close modal
+        [closeEmailModal, emailOverlay, emailClose].forEach(element => {
+            if (element) {
+                element.addEventListener('click', function() {
+                    changeEmailModal.classList.remove('active');
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

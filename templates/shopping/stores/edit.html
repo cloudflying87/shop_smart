@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit {{ store.name }} | ShopSmart{% endblock %}
+
+{% block header_title %}Edit Store{% endblock %}
+
+{% block content %}
+<div class="edit-store-container">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Edit {{ store.name }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="form-section">
+                    <h3 class="section-title">Store Information</h3>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            {{ form.name|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            {{ form.address|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            {{ form.website|as_crispy_field }}
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="custom-file-upload">
+                                {% if store.logo %}
+                                <div class="current-logo mb-2">
+                                    <label>Current Logo:</label>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="store-logo-preview mr-2">
+                                        <span class="text-muted">{{ store.logo.name }}</span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {{ form.logo|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="section-title">Family Access</h3>
+                    <p class="section-help">Select which families can access this store</p>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <div class="families-selector">
+                                {% for family in families %}
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="family_{{ family.id }}" name="families" value="{{ family.id }}"
+                                           {% if family in store.families.all %}checked{% endif %}>
+                                    <label class="custom-control-label" for="family_{{ family.id }}">{{ family.name }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{% url 'groceries:store_detail' pk=store.pk %}" class="btn btn-outline">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-store-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .section-help {
+        color: var(--text-tertiary);
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .families-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .custom-control-label {
+        font-weight: normal;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .store-logo-preview {
+        width: 50px;
+        height: 50px;
+        object-fit: contain;
+        border-radius: var(--border-radius-sm);
+        border: 1px solid var(--border-light);
+        padding: 0.25rem;
+        background-color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .families-selector {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

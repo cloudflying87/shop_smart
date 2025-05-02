@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Families | ShopSmart{% endblock %}
+
+{% block header_title %}My Families{% endblock %}
+
+{% block content %}
+<div class="families-container">
+    <!-- Action Buttons -->
+    <div class="action-buttons mb-4">
+        <a href="{% url 'groceries:create_family' %}" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-1">
+                <path fill="none" d="M0 0h24v24H0z"/>
+                <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+            </svg>
+            Create Family
+        </a>
+    </div>
+    
+    {% if families %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Your Families</h2>
+        </div>
+        <div class="card-body">
+            <div class="family-list">
+                {% for family in families %}
+                <div class="family-card">
+                    <div class="family-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">
+                            <path fill="none" d="M0 0h24v24H0z"/>
+                            <path d="M12 11a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5zm-6.712 3.006a6.983 6.983 0 0 0-.28 1.65L5 16v6H2v-4.5a3.5 3.5 0 0 1 3.119-3.48l.17-.014zm13.424 0A3.501 3.501 0 0 1 22 17.5V22h-3v-6c0-.693-.1-1.362-.288-1.994zM5.5 8a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm13 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM12 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="family-content">
+                        <h3 class="family-name">{{ family.name }}</h3>
+                        <p class="family-meta">
+                            <span class="family-member-count">{{ family.members.count }} members</span>
+                            <span class="mx-2">•</span>
+                            <span class="family-created">Created {{ family.created_at|date:"M d, Y" }}</span>
+                        </p>
+                        <div class="family-actions">
+                            <a href="{% url 'groceries:family_detail' pk=family.pk %}" class="btn btn-primary btn-sm">View</a>
+                            {% if user.profile.default_family != family %}
+                            <form method="post" action="{% url 'groceries:update_theme' %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="default_family" value="{{ family.id }}">
+                                <button type="submit" class="btn btn-outline btn-sm">Set as Default</button>
+                            </form>
+                            {% else %}
+                            <span class="badge badge-primary">Default Family</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64">
+                        <path fill="none" d="M0 0h24v24H0z"/>
+                        <path d="M12 11a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5zm-6.712 3.006a6.983 6.983 0 0 0-.28 1.65L5 16v6H2v-4.5a3.5 3.5 0 0 1 3.119-3.48l.17-.014zm13.424 0A3.501 3.501 0 0 1 22 17.5V22h-3v-6c0-.693-.1-1.362-.288-1.994zM5.5 8a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm13 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM12 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h2>No Families Yet</h2>
+                <p class="mb-4">Create a family to start sharing shopping lists</p>
+                <a href="{% url 'groceries:create_family' %}" class="btn btn-primary">Create Family</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .family-list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .family-card {
+        display: flex;
+        background-color: var(--bg-primary);
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--border-light);
+        overflow: hidden;
+        padding: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .family-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .family-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 70px;
+        height: 70px;
+        margin-right: 1rem;
+        color: var(--primary);
+    }
+    
+    .family-content {
+        flex: 1;
+    }
+    
+    .family-name {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.25rem;
+    }
+    
+    .family-meta {
+        color: var(--text-tertiary);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .family-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state-icon {
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+    
+    @media (min-width: 768px) {
+        .family-list {
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        }
+    }
+</style>
+{% endblock %}

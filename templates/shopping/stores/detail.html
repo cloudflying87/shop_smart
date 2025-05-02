@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ store.name }} | ShopSmart{% endblock %}
+
+{% block header_title %}{{ store.name }}{% endblock %}
+
+{% block content %}
+<div class="store-detail-container">
+    <!-- Store Header -->
+    <div class="store-header card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="store-info">
+                    <div class="d-flex align-items-center">
+                        <div class="store-logo mr-3">
+                            {% if store.logo %}
+                            <img src="{{ store.logo.url }}" alt="{{ store.name }}" class="store-logo-img">
+                            {% else %}
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M21 11.646V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.354A3.985 3.985 0 0 1 2 9V3a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v6c0 1.014-.378 1.94-1 2.646z" fill="currentColor"/>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <h1 class="store-title">{{ store.name }}</h1>
+                    </div>
+                    
+                    <div class="store-meta mt-3">
+                        {% if store.address %}
+                        <span class="store-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M12 20.9l4.95-4.95a7 7 0 1 0-9.9 0L12 20.9zm0 2.828l-6.364-6.364a9 9 0 1 1 12.728 0L12 23.728zM12 13a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 2a4 4 0 1 1 0-8 4 4 0 0 1 0 8z" fill="currentColor"/>
+                            </svg>
+                            {{ store.address }}
+                        </span>
+                        {% endif %}
+                        
+                        {% if store.website %}
+                        <span class="store-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-2.29-2.333A17.9 17.9 0 0 1 8.027 13H4.062a8.008 8.008 0 0 0 5.648 6.667zM10.03 13c.151 2.439.848 4.73 1.97 6.752A15.905 15.905 0 0 0 13.97 13h-3.94zm9.908 0h-3.965a17.9 17.9 0 0 1-1.683 6.667A8.008 8.008 0 0 0 19.938 13zM4.062 11h3.965A17.9 17.9 0 0 1 9.71 4.333 8.008 8.008 0 0 0 4.062 11zm5.969 0h3.938A15.905 15.905 0 0 0 12 4.248 15.905 15.905 0 0 0 10.03 11zm4.259-6.667A17.9 17.9 0 0 1 15.973 11h3.965a8.008 8.008 0 0 0-5.648-6.667z" fill="currentColor"/>
+                            </svg>
+                            <a href="{{ store.website }}" target="_blank" rel="noopener noreferrer">Website</a>
+                        </span>
+                        {% endif %}
+                        
+                        <span class="store-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M12 11a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5z" fill="currentColor"/>
+                            </svg>
+                            {% with family_count=store.families.count %}
+                            Used by {{ family_count }} {% if family_count == 1 %}family{% else %}families{% endif %}
+                            {% endwith %}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Store Actions -->
+                <div class="store-actions dropdown">
+                    <button class="btn btn-sm btn-outline dropdown-toggle" type="button" id="storeActionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="none" d="M0 0h24v24H0z"/>
+                            <path d="M12 3c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 14c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-7c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="currentColor"/>
+                        </svg>
+                        Actions
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="storeActionsDropdown">
+                        <a class="dropdown-item" href="{% url 'groceries:edit_store' pk=store.pk %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-2">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M15.728 9.686l-1.414-1.414L5 17.586V19h1.414l9.314-9.314zm1.414-1.414l1.414-1.414-1.414-1.414-1.414 1.414 1.414 1.414zM7.242 21H3v-4.243L16.435 3.322a1 1 0 0 1 1.414 0l2.829 2.829a1 1 0 0 1 0 1.414L7.243 21z" fill="currentColor"/>
+                            </svg>
+                            Edit Store
+                        </a>
+                        <a class="dropdown-item" href="{% url 'groceries:create_list' %}?store={{ store.pk }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-2">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M8 4h13v2H8V4zm-5-.5h3v3H3v-3zm0 7h3v3H3v-3zm0 7h3v3H3v-3zM8 11h13v2H8v-2zm0 7h13v2H8v-2z" fill="currentColor"/>
+                            </svg>
+                            Create List
+                        </a>
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#addLocationModal">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-2">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                            </svg>
+                            Add Location
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Store Locations Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="card-title">Store Locations</h2>
+            <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addLocationModal">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-1">
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                </svg>
+                Add Location
+            </button>
+        </div>
+        <div class="card-body">
+            {% if locations %}
+            <div class="locations-list">
+                <div class="location-card header">
+                    <div class="location-name">Name</div>
+                    <div class="location-order">Sort Order</div>
+                    <div class="location-actions">Actions</div>
+                </div>
+                {% for location in locations %}
+                <div class="location-card">
+                    <div class="location-name">{{ location.name }}</div>
+                    <div class="location-order">{{ location.sort_order }}</div>
+                    <div class="location-actions">
+                        <button class="btn btn-sm btn-outline" data-toggle="modal" data-target="#editLocationModal" 
+                                data-location-id="{{ location.id }}" 
+                                data-location-name="{{ location.name }}" 
+                                data-location-order="{{ location.sort_order }}">
+                            Edit
+                        </button>
+                        <form method="post" action="{% url 'groceries:delete_location' store_id=store.id pk=location.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this location?')">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">
+                        <path fill="none" d="M0 0h24v24H0z"/>
+                        <path d="M12 20.9l4.95-4.95a7 7 0 1 0-9.9 0L12 20.9zm0 2.828l-6.364-6.364a9 9 0 1 1 12.728 0L12 23.728zM12 13a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 2a4 4 0 1 1 0-8 4 4 0 0 1 0 8z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h3>No Locations Yet</h3>
+                <p class="mb-3">Add store locations to organize your shopping experience</p>
+                <button class="btn btn-primary" data-toggle="modal" data-target="#addLocationModal">Add First Location</button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Recent Lists Section -->
+    {% if recent_lists %}
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="card-title">Recent Lists</h2>
+            <a href="{% url 'groceries:create_list' %}?store={{ store.pk }}" class="btn btn-primary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-1">
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                </svg>
+                New List
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                {% for list in recent_lists %}
+                <a href="{% url 'groceries:list_detail' pk=list.pk %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="list-info">
+                            <h5 class="mb-1">{{ list.name }}</h5>
+                            <p class="mb-1 d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="mr-1">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M12 11a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5z" fill="currentColor"/>
+                                </svg>
+                                {{ list.family.name }}
+                                
+                                <span class="mx-2">•</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="mr-1">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm3.536-12.95l1.414 1.414-4.95 4.95L9.172 10.586l1.414-1.414 1.414 1.414 2.536-2.536z" fill="currentColor"/>
+                                </svg>
+                                {{ list.created_at|date:"M d, Y" }}
+                            </p>
+                        </div>
+                        
+                        <div class="list-progress">
+                            {% if list.completed %}
+                            <span class="badge badge-success">Completed</span>
+                            {% else %}
+                            <div class="progress" style="width: 100px; height: 8px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ list.progress_percentage }}%" aria-valuenow="{{ list.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted d-block text-right mt-1">{{ list.checked_items }}/{{ list.total_items }} items</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            <div class="text-center mt-3">
+                <a href="{% url 'groceries:lists' %}?store={{ store.id }}" class="btn btn-outline">View All Lists</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Location Modal -->
+<div class="modal" id="addLocationModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Add Store Location</h2>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'groceries:add_location' store_id=store.id %}" id="add-location-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="name">Location Name:</label>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Produce, Dairy, Bakery" required>
+                    <small class="form-text text-muted">Enter the name of a section/aisle in this store</small>
+                </div>
+                <div class="form-group">
+                    <label for="sort_order">Sort Order:</label>
+                    <input type="number" class="form-control" id="sort_order" name="sort_order" placeholder="e.g. 1, 2, 3" value="0">
+                    <small class="form-text text-muted">Lower numbers appear first in shopping lists</small>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="closeAddLocationModal">Cancel</button>
+            <button type="submit" form="add-location-form" class="btn btn-primary">Add Location</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Location Modal -->
+<div class="modal" id="editLocationModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Edit Store Location</h2>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="" id="edit-location-form">
+                {% csrf_token %}
+                <input type="hidden" id="edit-location-id" name="location_id">
+                <div class="form-group">
+                    <label for="edit-name">Location Name:</label>
+                    <input type="text" class="form-control" id="edit-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-sort-order">Sort Order:</label>
+                    <input type="number" class="form-control" id="edit-sort-order" name="sort_order">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="closeEditLocationModal">Cancel</button>
+            <button type="submit" form="edit-location-form" class="btn btn-primary">Save Changes</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .store-logo {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .store-logo-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    
+    .store-meta {
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+    }
+    
+    .store-meta-item {
+        display: flex;
+        align-items: center;
+        margin-right: 1rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+    }
+    
+    .store-meta-item svg {
+        margin-right: 0.25rem;
+    }
+    
+    .locations-list {
+        border: 1px solid var(--border-light);
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
+    }
+    
+    .location-card {
+        display: grid;
+        grid-template-columns: 1fr 100px 120px;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .location-card:last-child {
+        border-bottom: none;
+    }
+    
+    .location-card.header {
+        background-color: var(--bg-secondary);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .location-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+    
+    .location-order {
+        text-align: center;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state-icon {
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 576px) {
+        .location-card {
+            grid-template-columns: 1fr 80px 90px;
+            font-size: 0.9rem;
+        }
+        
+        .store-meta {
+            flex-direction: column;
+        }
+        
+        .store-meta-item {
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle dropdown functionality
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+        
+        dropdownToggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const dropdownMenu = this.nextElementSibling;
+                dropdownMenu.classList.toggle('show');
+                
+                // Close when clicking outside
+                document.addEventListener('click', function closeDropdown(e) {
+                    if (!toggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                        dropdownMenu.classList.remove('show');
+                        document.removeEventListener('click', closeDropdown);
+                    }
+                });
+            });
+        });
+        
+        // Add Location Modal functionality
+        const addLocationModal = document.getElementById('addLocationModal');
+        const closeAddLocationButton = document.getElementById('closeAddLocationModal');
+        const addLocationOverlay = addLocationModal.querySelector('.modal-overlay');
+        const addLocationClose = addLocationModal.querySelector('.modal-close');
+        
+        // Show modal
+        document.querySelectorAll('[data-toggle="modal"][data-target="#addLocationModal"]').forEach(button => {
+            button.addEventListener('click', function() {
+                addLocationModal.classList.add('active');
+            });
+        });
+        
+        // Close modal
+        [closeAddLocationButton, addLocationOverlay, addLocationClose].forEach(element => {
+            element.addEventListener('click', function() {
+                addLocationModal.classList.remove('active');
+            });
+        });
+        
+        // Edit Location Modal functionality
+        const editLocationModal = document.getElementById('editLocationModal');
+        const closeEditLocationButton = document.getElementById('closeEditLocationModal');
+        const editLocationOverlay = editLocationModal.querySelector('.modal-overlay');
+        const editLocationClose = editLocationModal.querySelector('.modal-close');
+        const editLocationForm = document.getElementById('edit-location-form');
+        
+        // Show edit modal & populate form
+        document.querySelectorAll('[data-toggle="modal"][data-target="#editLocationModal"]').forEach(button => {
+            button.addEventListener('click', function() {
+                const locationId = this.getAttribute('data-location-id');
+                const locationName = this.getAttribute('data-location-name');
+                const locationOrder = this.getAttribute('data-location-order');
+                
+                // Set form action URL
+                editLocationForm.action = `/groceries/stores/{{ store.id }}/locations/${locationId}/edit/`;
+                
+                // Populate form fields
+                document.getElementById('edit-location-id').value = locationId;
+                document.getElementById('edit-name').value = locationName;
+                document.getElementById('edit-sort-order').value = locationOrder;
+                
+                // Show modal
+                editLocationModal.classList.add('active');
+            });
+        });
+        
+        // Close edit modal
+        [closeEditLocationButton, editLocationOverlay, editLocationClose].forEach(element => {
+            element.addEventListener('click', function() {
+                editLocationModal.classList.remove('active');
+            });
+        });
+    });
+</script>
+{% endblock %}

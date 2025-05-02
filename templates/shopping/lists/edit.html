@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit List | ShopSmart{% endblock %}
+
+{% block header_title %}Edit List{% endblock %}
+
+{% block content %}
+<div class="edit-list-container">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Edit Shopping List</h2>
+        </div>
+        <div class="card-body">
+            {% crispy form %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-list-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ item.name }} | ShopSmart{% endblock %}
+
+{% block header_title %}Item Details{% endblock %}
+
+{% block content %}
+<div class="item-detail-container">
+    <!-- Item Header -->
+    <div class="item-header card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="item-info">
+                    <div class="d-flex align-items-center">
+                        <div class="item-image mr-3">
+                            {% if item.image_url %}
+                            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="item-image-img">
+                            {% else %}
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M8 3v9a4 4 0 1 0 8 0V3h2v9a6 6 0 1 1-12 0V3h2zM4 20h16v2H4v-2z" fill="currentColor"/>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h1 class="item-title">{{ item.name }}</h1>
+                            {% if item.brand %}
+                            <p class="item-brand">{{ item.brand }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="item-meta mt-3">
+                        {% if item.category %}
+                        <span class="item-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M10.9 2.1l9.899 1.415 1.414 9.9-9.192 9.192a1 1 0 0 1-1.414 0l-9.9-9.9a1 1 0 0 1 0-1.414L10.9 2.1zm.707 2.122L3.828 12l8.486 8.485 7.778-7.778-1.06-7.425-7.425-1.06z" fill="currentColor"/>
+                            </svg>
+                            {{ item.category.name }}
+                        </span>
+                        {% endif %}
+                        
+                        {% if item.barcode %}
+                        <span class="item-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M4 5h16v2H4V5zm0 4h16v2H4V9zm0 4h16v2H4v-2zm0 4h16v2H4v-2z" fill="currentColor"/>
+                            </svg>
+                            {{ item.barcode }}
+                        </span>
+                        {% endif %}
+                        
+                        <span class="item-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm1-8h4v2h-6V7h2v5z" fill="currentColor"/>
+                            </svg>
+                            Added {{ item.created_at|date:"M d, Y" }}
+                        </span>
+                    </div>
+                    
+                    {% if item.description %}
+                    <div class="item-description mt-3">
+                        <h3>Description</h3>
+                        <p>{{ item.description|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Item Actions -->
+                <div class="item-actions dropdown">
+                    <button class="btn btn-sm btn-outline dropdown-toggle" type="button" id="itemActionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="none" d="M0 0h24v24H0z"/>
+                            <path d="M12 3c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 14c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-7c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="currentColor"/>
+                        </svg>
+                        Actions
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="itemActionsDropdown">
+                        <a class="dropdown-item" href="{% url 'groceries:edit_item' pk=item.pk %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-2">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M15.728 9.686l-1.414-1.414L5 17.586V19h1.414l9.314-9.314zm1.414-1.414l1.414-1.414-1.414-1.414-1.414 1.414 1.414 1.414zM7.242 21H3v-4.243L16.435 3.322a1 1 0 0 1 1.414 0l2.829 2.829a1 1 0 0 1 0 1.414L7.243 21z" fill="currentColor"/>
+                            </svg>
+                            Edit Item
+                        </a>
+                        <a class="dropdown-item" href="#" id="addToListBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-2">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M8 4h13v2H8V4zm-5-.5h3v3H3v-3zm0 7h3v3H3v-3zm0 7h3v3H3v-3zM8 11h13v2H8v-2zm0 7h13v2H8v-2z" fill="currentColor"/>
+                            </svg>
+                            Add to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Price Information -->
+    {% if store_info %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="card-title">Store Prices</h2>
+        </div>
+        <div class="card-body">
+            <div class="price-list">
+                <div class="price-row header">
+                    <div class="price-store">Store</div>
+                    <div class="price-location">Location</div>
+                    <div class="price-amount">Last Price</div>
+                    <div class="price-average">Average Price</div>
+                    <div class="price-date">Last Purchased</div>
+                </div>
+                
+                {% for info in store_info %}
+                <div class="price-row">
+                    <div class="price-store">{{ info.store.name }}</div>
+                    <div class="price-location">{{ info.location.name|default:"Not specified" }}</div>
+                    <div class="price-amount">
+                        {% if info.last_price %}
+                        ${{ info.last_price }}
+                        {% else %}
+                        --
+                        {% endif %}
+                    </div>
+                    <div class="price-average">
+                        {% if info.average_price %}
+                        ${{ info.average_price }}
+                        {% else %}
+                        --
+                        {% endif %}
+                    </div>
+                    <div class="price-date">
+                        {% if info.last_purchased %}
+                        {{ info.last_purchased|date:"M d, Y" }}
+                        {% else %}
+                        Never
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Usage in Families -->
+    {% if family_usage %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="card-title">Family Usage</h2>
+        </div>
+        <div class="card-body">
+            <div class="family-usage-list">
+                {% for usage in family_usage %}
+                <div class="family-usage-item">
+                    <div class="family-usage-name">{{ usage.family.name }}</div>
+                    <div class="family-usage-count">
+                        <span class="badge badge-primary">{{ usage.usage_count }} uses</span>
+                    </div>
+                    <div class="family-usage-date">Last used on {{ usage.last_used|date:"M d, Y" }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Lists with this Item -->
+    {% if lists %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">In Shopping Lists</h2>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                {% for list in lists %}
+                <a href="{% url 'groceries:list_detail' pk=list.pk %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="list-info">
+                            <h5 class="mb-1">{{ list.name }}</h5>
+                            <p class="mb-1 d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="mr-1">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M21 11.646V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.354A3.985 3.985 0 0 1 2 9V3a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v6c0 1.014-.378 1.94-1 2.646z" fill="currentColor"/>
+                                </svg>
+                                {{ list.store.name }}
+                                
+                                <span class="mx-2">•</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="mr-1">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M12 11a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5z" fill="currentColor"/>
+                                </svg>
+                                {{ list.family.name }}
+                            </p>
+                        </div>
+                        
+                        <div class="list-status">
+                            {% if list.completed %}
+                            <span class="badge badge-success">Completed</span>
+                            {% else %}
+                            <span class="badge badge-primary">Active</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add to List Modal -->
+<div class="modal" id="addToListModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Add to Shopping List</h2>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="shopping-list-select">Select list:</label>
+                <select id="shopping-list-select" class="form-control">
+                    <option value="" disabled selected>Select a list</option>
+                    {% for list in active_lists %}
+                    <option value="{{ list.id }}">{{ list.name }} ({{ list.store.name }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="quantity">Quantity:</label>
+                <input type="number" id="quantity" class="form-control" min="0.01" step="0.01" value="1">
+            </div>
+            <div class="form-group">
+                <label for="unit">Unit (optional):</label>
+                <input type="text" id="unit" class="form-control" placeholder="e.g. kg, pkg">
+            </div>
+            <div class="form-group">
+                <label for="note">Note (optional):</label>
+                <textarea id="note" class="form-control" rows="2" placeholder="Add a note about this item"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="closeAddToListModal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirmAddToList">Add to List</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .item-detail-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .item-image {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--bg-secondary);
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
+    }
+    
+    .item-image-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    
+    .item-brand {
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+        font-size: 1rem;
+    }
+    
+    .item-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .item-meta-item {
+        display: flex;
+        align-items: center;
+        color: var(--text-tertiary);
+        font-size: 0.9rem;
+    }
+    
+    .item-meta-item svg {
+        margin-right: 0.25rem;
+    }
+    
+    .item-description h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .price-list {
+        border: 1px solid var(--border-light);
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
+    }
+    
+    .price-row {
+        display: grid;
+        grid-template-columns: 2fr 1.5fr 1fr 1fr 1.5fr;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .price-row:last-child {
+        border-bottom: none;
+    }
+    
+    .price-row.header {
+        background-color: var(--bg-secondary);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .family-usage-list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .family-usage-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background-color: var(--bg-primary);
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--border-light);
+    }
+    
+    .family-usage-name {
+        flex: 1;
+        font-weight: 500;
+    }
+    
+    .family-usage-count {
+        margin: 0 1rem;
+    }
+    
+    .family-usage-date {
+        color: var(--text-tertiary);
+        font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+        .price-row {
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+        
+        .price-row.header {
+            display: none;
+        }
+        
+        .price-row > div {
+            position: relative;
+            padding-top: 1.5rem;
+        }
+        
+        .price-row > div::before {
+            content: attr(class);
+            text-transform: capitalize;
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+        
+        .price-store::before {
+            content: "Store";
+        }
+        
+        .price-location::before {
+            content: "Location";
+        }
+        
+        .price-amount::before {
+            content: "Last Price";
+        }
+        
+        .price-average::before {
+            content: "Average Price";
+        }
+        
+        .price-date::before {
+            content: "Last Purchased";
+        }
+        
+        .family-usage-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .family-usage-name {
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle dropdown functionality
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+        
+        dropdownToggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const dropdownMenu = this.nextElementSibling;
+                dropdownMenu.classList.toggle('show');
+                
+                // Close when clicking outside
+                document.addEventListener('click', function closeDropdown(e) {
+                    if (!toggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                        dropdownMenu.classList.remove('show');
+                        document.removeEventListener('click', closeDropdown);
+                    }
+                });
+            });
+        });
+        
+        // Add to List Modal functionality
+        const addToListModal = document.getElementById('addToListModal');
+        const addToListBtn = document.getElementById('addToListBtn');
+        const closeAddToListModal = document.getElementById('closeAddToListModal');
+        const addToListOverlay = addToListModal.querySelector('.modal-overlay');
+        const addToListClose = addToListModal.querySelector('.modal-close');
+        const confirmAddToList = document.getElementById('confirmAddToList');
+        
+        // Show modal
+        if (addToListBtn) {
+            addToListBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                addToListModal.classList.add('active');
+            });
+        }
+        
+        // Close modal
+        [closeAddToListModal, addToListOverlay, addToListClose].forEach(element => {
+            if (element) {
+                element.addEventListener('click', function() {
+                    addToListModal.classList.remove('active');
+                });
+            }
+        });
+        
+        // Handle add to list
+        if (confirmAddToList) {
+            confirmAddToList.addEventListener('click', function() {
+                const listId = document.getElementById('shopping-list-select').value;
+                const quantity = document.getElementById('quantity').value;
+                const unit = document.getElementById('unit').value;
+                const note = document.getElementById('note').value;
+                
+                if (!listId) {
+                    alert('Please select a shopping list');
+                    return;
+                }
+                
+                // Create form data for the request
+                const formData = new FormData();
+                formData.append('item_id', '{{ item.id }}');
+                formData.append('quantity', quantity);
+                formData.append('unit', unit);
+                formData.append('note', note);
+                
+                // Send AJAX request
+                fetch(`/groceries/lists/${listId}/items/add/`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        addToListModal.classList.remove('active');
+                        
+                        // Show success notification
+                        alert('Item added to list successfully');
+                        
+                        // Reset form
+                        document.getElementById('quantity').value = '1';
+                        document.getElementById('unit').value = '';
+                        document.getElementById('note').value = '';
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

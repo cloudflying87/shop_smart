@@ -1,0 +1,1079 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ list.name }} | ShopSmart{% endblock %}
+
+{% block header_title %}{{ list.name }}{% endblock %}
+
+{% block content %}
+<div class="list-detail-container">
+    <!-- List Header -->
+    <div class="list-header card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="list-info">
+                    <h1 class="list-title">{{ list.name }}</h1>
+                    <div class="list-meta">
+                        <span class="list-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M21 11.646V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.354A3.985 3.985 0 0 1 2 9V3a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v6c0 1.014-.378 1.94-1 2.646z" fill="currentColor"/>
+                            </svg>
+                            {{ list.store.name }}
+                        </span>
+                        
+                        <span class="list-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M12 11a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5z" fill="currentColor"/>
+                            </svg>
+                            {{ list.family.name }}
+                        </span>
+                        
+                        <span class="list-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm3.536-12.95l1.414 1.414-4.95 4.95L9.172 10.586l1.414-1.414 1.414 1.414 2.536-2.536z" fill="currentColor"/>
+                            </svg>
+                            {{ list.created_at|date:"M d, Y" }}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- List Actions -->
+                <div class="list-actions dropdown">
+                    <button class="btn btn-sm btn-outline dropdown-toggle" type="button" id="listActionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="none" d="M0 0h24v24H0z"/>
+                            <path d="M12 3c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 14c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-7c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="currentColor"/>
+                        </svg>
+                        Actions
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="listActionsDropdown">
+                        <a class="dropdown-item" href="{% url 'groceries:edit_list' pk=list.pk %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-2">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M15.728 9.686l-1.414-1.414L5 17.586V19h1.414l9.314-9.314zm1.414-1.414l1.414-1.414-1.414-1.414-1.414 1.414 1.414 1.414zM7.242 21H3v-4.243L16.435 3.322a1 1 0 0 1 1.414 0l2.829 2.829a1 1 0 0 1 0 1.414L7.243 21z" fill="currentColor"/>
+                            </svg>
+                            Edit List
+                        </a>
+                        <a class="dropdown-item" href="#" data-action="duplicate" data-list-id="{{ list.pk }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-2">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M7 6V3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3v3c0 .552-.45 1-1.007 1H4.007A1.001 1.001 0 0 1 3 21l.003-14c0-.552.45-1 1.006-1H7zM5.003 8L5 20h10V8H5.003zM9 6h8v10h2V4H9v2z" fill="currentColor"/>
+                            </svg>
+                            Duplicate List
+                        </a>
+                        {% if list.completed %}
+                        <a class="dropdown-item" href="#" data-action="reopen" data-list-id="{{ list.pk }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-2">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M5.463 4.433A9.961 9.961 0 0 1 12 2c5.523 0 10 4.477 10 10-2.793 0-5.19-.893-7.14-2.622-1.424-1.405-2.496-3.2-3.1-5.15M2.004 10.58A8.677 8.677 0 0 0 2 12c0 5.523 4.477 10 10 10a9.974 9.974 0 0 0 5.587-1.69h-.001L6 10.58V6h6V4H5.501A9.96 9.96 0 0 0 3.58 8.028L6 10.581l-3.996-.001z" fill="currentColor"/>
+                            </svg>
+                            Reopen List
+                        </a>
+                        {% else %}
+                        <a class="dropdown-item" href="#" data-action="complete" data-list-id="{{ list.pk }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-2">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-.997-6l7.07-7.071-1.414-1.414-5.656 5.657-2.829-2.829-1.414 1.414L11.003 16z" fill="currentColor"/>
+                            </svg>
+                            Mark as Complete
+                        </a>
+                        {% endif %}
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="#" data-action="delete" data-list-id="{{ list.pk }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-2">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M7 4V2h10v2h5v2h-2v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6H2V4h5zM6 6v14h12V6H6zm3 3h2v8H9V9zm4 0h2v8h-2V9z" fill="currentColor"/>
+                            </svg>
+                            Delete List
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="list-progress mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span>Progress</span>
+                    <span>{{ list.checked_items }}/{{ list.total_items }} items ({{ list.progress_percentage }}%)</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ list.progress_percentage }}%" aria-valuenow="{{ list.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Item Search Box -->
+    <div class="search-container card mb-4">
+        <div class="card-body">
+            <form id="item-search-form" class="item-search-form">
+                <div class="input-group">
+                    <input type="text" id="item-search" class="form-control" placeholder="Search for items to add...">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M18.031 16.617l4.283 4.282-1.415 1.415-4.282-4.283A8.96 8.96 0 0 1 11 20c-4.968 0-9-4.032-9-9s4.032-9 9-9 9 4.032 9 9a8.96 8.96 0 0 1-1.969 5.617zm-2.006-.742A6.977 6.977 0 0 0 18 11c0-3.868-3.133-7-7-7-3.868 0-7 3.132-7 7 0 3.867 3.132 7 7 7a6.977 6.977 0 0 0 4.875-1.975l.15-.15z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Search Results Container -->
+            <div id="search-results" class="search-results mt-3" style="display: none;">
+                <h3 class="results-title mb-2">Results</h3>
+                <div id="results-container" class="results-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Item List -->
+    {% if list_items %}
+    <div class="items-container">
+        {% if uncategorized_items %}
+        <div class="location-section">
+            <div class="location-header">Uncategorized</div>
+            <div class="card">
+                <ul class="list-items">
+                    {% for item in uncategorized_items %}
+                    <li class="list-item {% if item.checked %}checked{% endif %}" data-item-id="{{ item.id }}">
+                        <div class="item-check">
+                            <div class="custom-checkbox {% if item.checked %}checked{% endif %}" data-item-id="{{ item.id }}" data-list-id="{{ list.id }}"></div>
+                        </div>
+                        <div class="item-content">
+                            <div class="item-name">{{ item.item.name }}</div>
+                            <div class="item-details">
+                                {% if item.quantity %}
+                                <span class="item-quantity">{{ item.quantity }} {% if item.unit %}{{ item.unit }}{% endif %}</span>
+                                {% endif %}
+                                {% if item.actual_price %}
+                                <span class="item-price">${{ item.actual_price }}</span>
+                                {% endif %}
+                            </div>
+                            {% if item.note %}
+                            <div class="item-note">{{ item.note }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="item-actions">
+                            <button class="item-action-btn edit-price-btn" data-item-id="{{ item.id }}" data-list-id="{{ list.id }}" title="Update Price">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-3.5-8v2H11v2h2v-2h1.5v-2H13v-2h-2v2H8.5z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <button class="item-action-btn remove-item-btn" data-item-id="{{ item.id }}" data-list-id="{{ list.id }}" title="Remove Item">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% for location, items in locations.items %}
+        <div class="location-section">
+            <div class="location-header">{{ location.name }}</div>
+            <div class="card">
+                <ul class="list-items">
+                    {% for item in items %}
+                    <li class="list-item {% if item.checked %}checked{% endif %}" data-item-id="{{ item.id }}">
+                        <div class="item-check">
+                            <div class="custom-checkbox {% if item.checked %}checked{% endif %}" data-item-id="{{ item.id }}" data-list-id="{{ list.id }}"></div>
+                        </div>
+                        <div class="item-content">
+                            <div class="item-name">{{ item.item.name }}</div>
+                            <div class="item-details">
+                                {% if item.quantity %}
+                                <span class="item-quantity">{{ item.quantity }} {% if item.unit %}{{ item.unit }}{% endif %}</span>
+                                {% endif %}
+                                {% if item.actual_price %}
+                                <span class="item-price">${{ item.actual_price }}</span>
+                                {% endif %}
+                            </div>
+                            {% if item.note %}
+                            <div class="item-note">{{ item.note }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="item-actions">
+                            <button class="item-action-btn edit-price-btn" data-item-id="{{ item.id }}" data-list-id="{{ list.id }}" title="Update Price">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-3.5-8v2H11v2h2v-2h1.5v-2H13v-2h-2v2H8.5z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <button class="item-action-btn remove-item-btn" data-item-id="{{ item.id }}" data-list-id="{{ list.id }}" title="Remove Item">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-list card">
+        <div class="card-body text-center">
+            <div class="empty-state-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64">
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path d="M20 22H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1zm-1-2V4H5v16h14zM8 7h8v2H8V7zm0 4h8v2H8v-2zm0 4h8v2H8v-2z" fill="currentColor"/>
+                </svg>
+            </div>
+            <h2>This list is empty</h2>
+            <p class="mb-4">Start adding items to your shopping list.</p>
+            <p class="text-muted">Use the search box above to find and add items.</p>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Recommended Items Section -->
+    {% if recommended_items %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3 class="card-title">Recommended Items</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">Based on your shopping history</p>
+            <div class="recommendation-items">
+                {% for item in recommended_items %}
+                <div class="recommendation-item">
+                    <div class="recommendation-img">
+                        {% if item.image_url %}
+                        <img src="{{ item.image_url }}" alt="{{ item.name }}">
+                        {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">
+                            <path fill="none" d="M0 0h24v24H0z"/>
+                            <path d="M3 10h18v10.004c0 .55-.445.996-.993.996H3.993A.994.994 0 0 1 3 20.004V10zm6 2v2h6v-2H9zM2 9V5.994c0-.55.445-.994.993-.994h18.014c.548 0 .993.445.993.994V9H2z" fill="currentColor"/>
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <div class="recommendation-info">
+                        <div class="recommendation-name">{{ item.name }}</div>
+                        {% if item.brand %}
+                        <div class="recommendation-brand">{{ item.brand }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="add-recommendation">
+                        <button class="btn btn-sm btn-outline add-item-btn" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                            </svg>
+                            Add
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Price Update Modal -->
+<div class="modal" id="price-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 id="price-modal-title">Update Price</h2>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="price-form">
+                <input type="hidden" id="price-item-id">
+                <input type="hidden" id="price-list-id">
+                
+                <div class="form-group">
+                    <label for="price-input">Price:</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">$</span>
+                        </div>
+                        <input type="number" id="price-input" class="form-control" min="0.01" step="0.01" placeholder="0.00" required>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="save-price-btn">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal" id="add-item-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 id="add-item-modal-title">Add Item</h2>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="add-item-form">
+                <input type="hidden" id="add-item-id">
+                
+                <div class="form-group">
+                    <label for="add-quantity">Quantity:</label>
+                    <input type="number" id="add-quantity" class="form-control" min="0.01" step="0.01" value="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="add-unit">Unit:</label>
+                    <input type="text" id="add-unit" class="form-control" placeholder="e.g. kg, pkg">
+                </div>
+                
+                <div class="form-group">
+                    <label for="add-note">Note:</label>
+                    <textarea id="add-note" class="form-control" rows="2" placeholder="Add a note about this item"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="save-item-btn">Add to List</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="delete-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Delete List</h2>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete this shopping list? This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .list-meta {
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+    }
+    
+    .list-meta-item {
+        display: flex;
+        align-items: center;
+        margin-right: 1rem;
+        color: var(--text-secondary);
+    }
+    
+    .list-meta-item svg {
+        margin-right: 0.25rem;
+    }
+    
+    .list-items {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    
+    .list-item {
+        display: flex;
+        align-items: center;
+        padding: var(--space-md) 0;
+        border-bottom: 1px solid var(--border-light);
+        position: relative;
+    }
+    
+    .list-item:last-child {
+        border-bottom: none;
+    }
+    
+    .item-check {
+        width: var(--touch-target-size);
+        height: var(--touch-target-size);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: var(--space-sm);
+    }
+    
+    .custom-checkbox {
+        width: 24px;
+        height: 24px;
+        border: 2px solid var(--border-medium);
+        border-radius: 4px;
+        position: relative;
+        transition: background-color 0.2s, border-color 0.2s;
+        cursor: pointer;
+    }
+    
+    .custom-checkbox.checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+    
+    .custom-checkbox.checked::after {
+        content: '';
+        position: absolute;
+        top: 45%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(45deg);
+        width: 5px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+    }
+    
+    .item-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .item-name {
+        font-weight: 500;
+        margin-bottom: 2px;
+        transition: color 0.2s, text-decoration 0.2s;
+    }
+    
+    .item-details {
+        display: flex;
+        align-items: center;
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+    }
+    
+    .item-quantity {
+        margin-right: var(--space-md);
+    }
+    
+    .item-price {
+        font-weight: 500;
+        color: var(--success);
+    }
+    
+    .item-note {
+        font-size: 0.8rem;
+        margin-top: 4px;
+        color: var(--text-secondary);
+        font-style: italic;
+    }
+    
+    .list-item.checked .item-name {
+        color: var(--text-tertiary);
+        text-decoration: line-through;
+    }
+    
+    .item-actions {
+        display: flex;
+    }
+    
+    .item-action-btn {
+        width: var(--touch-target-size);
+        height: var(--touch-target-size);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+    }
+    
+    .item-action-btn:hover {
+        color: var(--text-primary);
+    }
+    
+    .location-section {
+        margin-bottom: var(--space-lg);
+    }
+    
+    .location-header {
+        background-color: var(--bg-secondary);
+        padding: var(--space-sm) var(--space-md);
+        border-radius: 8px;
+        margin-bottom: var(--space-sm);
+        font-weight: 500;
+    }
+    
+    .empty-list {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state-icon {
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+    
+    .recommendation-items {
+        display: flex;
+        overflow-x: auto;
+        padding: var(--space-sm) 0;
+        gap: var(--space-md);
+    }
+    
+    .recommendation-item {
+        min-width: 140px;
+        background-color: var(--bg-primary);
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .recommendation-img {
+        height: 90px;
+        background-color: var(--bg-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .recommendation-img img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    
+    .recommendation-info {
+        padding: var(--space-sm);
+    }
+    
+    .recommendation-name {
+        font-weight: 500;
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .recommendation-brand {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .add-recommendation {
+        padding: var(--space-xs);
+        background-color: var(--bg-secondary);
+        border-top: 1px solid var(--border-light);
+        text-align: center;
+    }
+    
+    .results-container {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .search-result-item {
+        display: flex;
+        align-items: center;
+        padding: var(--space-sm) var(--space-md);
+        border-bottom: 1px solid var(--border-light);
+        cursor: pointer;
+    }
+    
+    .search-result-item:hover {
+        background-color: var(--bg-secondary);
+    }
+    
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+    
+    .result-content {
+        flex: 1;
+    }
+    
+    .result-name {
+        font-weight: 500;
+    }
+    
+    .result-brand {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+    }
+    
+    @media (min-width: 768px) {
+        .recommendation-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: var(--space-md);
+            overflow-x: visible;
+        }
+        
+        .recommendation-item {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle item checked state
+        const checkboxes = document.querySelectorAll('.custom-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const listId = this.dataset.listId;
+                
+                // Optimistic UI update
+                this.classList.toggle('checked');
+                const listItem = this.closest('.list-item');
+                listItem.classList.toggle('checked');
+                
+                // Send request to server
+                fetch(`/shopping/lists/${listId}/items/${itemId}/toggle/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        // Revert UI if there was an error
+                        this.classList.toggle('checked');
+                        listItem.classList.toggle('checked');
+                        console.error('Error toggling item:', data.error);
+                    }
+                    
+                    // Update progress bar
+                    updateProgress();
+                })
+                .catch(error => {
+                    // Revert UI on error
+                    this.classList.toggle('checked');
+                    listItem.classList.toggle('checked');
+                    console.error('Error:', error);
+                });
+            });
+        });
+        
+        // Price update modal
+        const priceModal = document.getElementById('price-modal');
+        const editPriceBtns = document.querySelectorAll('.edit-price-btn');
+        const saveButton = document.getElementById('save-price-btn');
+        
+        editPriceBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const listId = this.dataset.listId;
+                const itemName = this.closest('.list-item').querySelector('.item-name').textContent;
+                
+                document.getElementById('price-item-id').value = itemId;
+                document.getElementById('price-list-id').value = listId;
+                document.getElementById('price-modal-title').textContent = `Update Price: ${itemName}`;
+                
+                // Get current price if exists
+                const priceElement = this.closest('.list-item').querySelector('.item-price');
+                if (priceElement) {
+                    const currentPrice = priceElement.textContent.replace('$', '');
+                    document.getElementById('price-input').value = currentPrice;
+                } else {
+                    document.getElementById('price-input').value = '';
+                }
+                
+                // Show modal
+                priceModal.classList.add('active');
+            });
+        });
+        
+        // Save price
+        saveButton.addEventListener('click', function() {
+            const itemId = document.getElementById('price-item-id').value;
+            const listId = document.getElementById('price-list-id').value;
+            const price = document.getElementById('price-input').value;
+            
+            if (!price) {
+                return;
+            }
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('price', price);
+            formData.append('csrfmiddlewaretoken', getCSRFToken());
+            
+            // Send request to server
+            fetch(`/shopping/lists/${listId}/items/${itemId}/price/`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    priceModal.classList.remove('active');
+                    
+                    // Update UI
+                    const listItem = document.querySelector(`.list-item[data-item-id="${itemId}"]`);
+                    if (listItem) {
+                        const itemDetails = listItem.querySelector('.item-details');
+                        let priceElement = itemDetails.querySelector('.item-price');
+                        
+                        if (!priceElement) {
+                            priceElement = document.createElement('span');
+                            priceElement.className = 'item-price';
+                            itemDetails.appendChild(priceElement);
+                        }
+                        
+                        priceElement.textContent = `$${data.price}`;
+                    }
+                } else {
+                    console.error('Error updating price:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+        
+        // Close modals
+        document.querySelectorAll('.modal-close, .modal-overlay, [data-dismiss="modal"]').forEach(element => {
+            element.addEventListener('click', function() {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            });
+        });
+        
+        // Item search
+        const searchForm = document.getElementById('item-search-form');
+        const searchInput = document.getElementById('item-search');
+        const searchResults = document.getElementById('search-results');
+        const resultsContainer = document.getElementById('results-container');
+        
+        searchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const query = searchInput.value.trim();
+            
+            if (!query) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            
+            // Show loading state
+            resultsContainer.innerHTML = '<div class="text-center p-3"><div class="spinner"></div><p>Searching...</p></div>';
+            searchResults.style.display = 'block';
+            
+            // Send search request
+            fetch(`/shopping/api/items/search/?family={{ list.family.id }}&store={{ list.store.id }}&query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.items && data.items.length > 0) {
+                        // Display results
+                        resultsContainer.innerHTML = '';
+                        
+                        data.items.forEach(item => {
+                            const resultItem = document.createElement('div');
+                            resultItem.className = 'search-result-item';
+                            resultItem.dataset.itemId = item.id;
+                            resultItem.dataset.itemName = item.name;
+                            
+                            resultItem.innerHTML = `
+                                <div class="result-content">
+                                    <div class="result-name">${item.name}</div>
+                                    ${item.brand ? `<div class="result-brand">${item.brand}</div>` : ''}
+                                </div>
+                                <button class="btn btn-sm btn-outline add-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                        <path fill="none" d="M0 0h24v24H0z"/>
+                                        <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                                    </svg>
+                                    Add
+                                </button>
+                            `;
+                            
+                            resultsContainer.appendChild(resultItem);
+                            
+                            // Add click handler
+                            resultItem.addEventListener('click', function() {
+                                openAddItemModal(this.dataset.itemId, this.dataset.itemName);
+                            });
+                        });
+                    } else {
+                        // No results
+                        resultsContainer.innerHTML = `
+                            <div class="text-center p-3">
+                                <p>No items found matching "${query}"</p>
+                                <button class="btn btn-sm btn-primary mt-2" id="create-new-item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="mr-1">
+                                        <path fill="none" d="M0 0h24v24H0z"/>
+                                        <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                                    </svg>
+                                    Create New Item
+                                </button>
+                            </div>
+                        `;
+                        
+                        // Add click handler for create button
+                        document.getElementById('create-new-item').addEventListener('click', function() {
+                            window.location.href = `/shopping/items/create/?name=${encodeURIComponent(query)}&family={{ list.family.id }}&list={{ list.id }}`;
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error searching items:', error);
+                    resultsContainer.innerHTML = '<div class="text-center p-3"><p>Error searching items. Please try again.</p></div>';
+                });
+        });
+        
+        // Clear search when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchForm.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+        
+        // Add item modal
+        const addItemModal = document.getElementById('add-item-modal');
+        const addItemForm = document.getElementById('add-item-form');
+        const saveItemBtn = document.getElementById('save-item-btn');
+        
+        // Function to open add item modal
+        function openAddItemModal(itemId, itemName) {
+            document.getElementById('add-item-id').value = itemId;
+            document.getElementById('add-item-modal-title').textContent = `Add: ${itemName}`;
+            
+            // Reset form
+            document.getElementById('add-quantity').value = '1';
+            document.getElementById('add-unit').value = '';
+            document.getElementById('add-note').value = '';
+            
+            // Show modal
+            addItemModal.classList.add('active');
+            searchResults.style.display = 'none';
+        }
+        
+        // Handle recommended items
+        document.querySelectorAll('.add-item-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const itemName = this.dataset.itemName;
+                
+                openAddItemModal(itemId, itemName);
+            });
+        });
+        
+        // Save item
+        saveItemBtn.addEventListener('click', function() {
+            const itemId = document.getElementById('add-item-id').value;
+            const quantity = document.getElementById('add-quantity').value;
+            const unit = document.getElementById('add-unit').value;
+            const note = document.getElementById('add-note').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('item_id', itemId);
+            formData.append('quantity', quantity);
+            formData.append('unit', unit);
+            formData.append('note', note);
+            formData.append('csrfmiddlewaretoken', getCSRFToken());
+            
+            // Send request to server
+            fetch(`/shopping/lists/{{ list.id }}/items/add/`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    addItemModal.classList.remove('active');
+                    
+                    // Reload page to show new item
+                    window.location.reload();
+                } else {
+                    console.error('Error adding item:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+        
+        // Remove item
+        const removeItemBtns = document.querySelectorAll('.remove-item-btn');
+        
+        removeItemBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const listId = this.dataset.listId;
+                
+                if (confirm('Are you sure you want to remove this item from the list?')) {
+                    // Send request to server
+                    fetch(`/shopping/lists/${listId}/items/${itemId}/remove/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCSRFToken()
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Remove item from UI
+                            const listItem = this.closest('.list-item');
+                            listItem.style.height = listItem.offsetHeight + 'px';
+                            listItem.style.opacity = '0';
+                            listItem.style.transform = 'translateX(20px)';
+                            listItem.style.transition = 'opacity 0.3s, transform 0.3s';
+                            
+                            setTimeout(() => {
+                                listItem.style.height = '0';
+                                listItem.style.padding = '0';
+                                listItem.style.margin = '0';
+                                listItem.style.overflow = 'hidden';
+                                listItem.style.transition = 'height 0.3s, padding 0.3s, margin 0.3s';
+                                
+                                setTimeout(() => {
+                                    listItem.remove();
+                                    
+                                    // Update progress
+                                    updateProgress();
+                                    
+                                    // Check if section is empty
+                                    const section = this.closest('.location-section');
+                                    if (section && section.querySelectorAll('.list-item').length === 0) {
+                                        section.remove();
+                                    }
+                                    
+                                    // Check if list is empty
+                                    if (document.querySelectorAll('.list-item').length === 0) {
+                                        window.location.reload();
+                                    }
+                                }, 300);
+                            }, 300);
+                        } else {
+                            console.error('Error removing item:', data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            });
+        });
+        
+        // List actions
+        const listActions = document.querySelectorAll('[data-action]');
+        const deleteModal = document.getElementById('delete-modal');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        
+        listActions.forEach(action => {
+            action.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const actionType = this.dataset.action;
+                const listId = this.dataset.listId;
+                
+                switch (actionType) {
+                    case 'delete':
+                        deleteModal.classList.add('active');
+                        
+                        // Set up confirm button
+                        confirmDeleteBtn.onclick = function() {
+                            window.location.href = `/shopping/lists/${listId}/delete/`;
+                        };
+                        break;
+                        
+                    case 'duplicate':
+                        // Send duplicate request
+                        fetch(`/shopping/lists/${listId}/duplicate/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCSRFToken()
+                            }
+                        })
+                        .then(response => {
+                            // Redirect to the new list
+                            window.location.href = response.url;
+                        })
+                        .catch(error => {
+                            console.error('Error duplicating list:', error);
+                        });
+                        break;
+                        
+                    case 'complete':
+                        // Send complete request
+                        fetch(`/shopping/lists/${listId}/complete/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCSRFToken()
+                            }
+                        })
+                        .then(response => {
+                            // Reload page
+                            window.location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Error completing list:', error);
+                        });
+                        break;
+                        
+                    case 'reopen':
+                        // Send reopen request
+                        fetch(`/shopping/lists/${listId}/reopen/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCSRFToken()
+                            }
+                        })
+                        .then(response => {
+                            // Reload page
+                            window.location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Error reopening list:', error);
+                        });
+                        break;
+                }
+            });
+        });
+        
+        // Update progress calculation
+        function updateProgress() {
+            const totalItems = document.querySelectorAll('.list-item').length;
+            const checkedItems = document.querySelectorAll('.list-item.checked').length;
+            
+            if (totalItems > 0) {
+                const percentage = Math.round((checkedItems / totalItems) * 100);
+                
+                // Update progress bar
+                const progressBar = document.querySelector('.progress-bar');
+                progressBar.style.width = percentage + '%';
+                progressBar.setAttribute('aria-valuenow', percentage);
+                
+                // Update progress text
+                const progressText = document.querySelector('.list-progress span:last-child');
+                progressText.textContent = `${checkedItems}/${totalItems} items (${percentage}%)`;
+            }
+        }
+    });
+</script>
+{% endblock %}

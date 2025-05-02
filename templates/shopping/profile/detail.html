@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Your Profile | ShopSmart{% endblock %}
+
+{% block header_title %}Your Profile{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="profile-info">
+                    <div class="profile-avatar">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div class="profile-details">
+                        <h1 class="profile-name">{{ user.get_full_name|default:user.username }}</h1>
+                        <p class="profile-meta">
+                            <span class="profile-meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M3 3h18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm17 4.238l-7.928 7.1L4 7.216V19h16V7.238zM4.511 5l7.55 6.662L19.502 5H4.511z" fill="currentColor"/>
+                                </svg>
+                                {{ user.email }}
+                            </span>
+                            <span class="profile-meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm1-8h4v2h-6V7h2v5z" fill="currentColor"/>
+                                </svg>
+                                Member since {{ user.date_joined|date:"M d, Y" }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Profile Actions -->
+                <div class="profile-actions">
+                    <a href="{% url 'groceries:edit_profile' %}" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-1">
+                            <path fill="none" d="M0 0h24v24H0z"/>
+                            <path d="M15.728 9.686l-1.414-1.414L5 17.586V19h1.414l9.314-9.314zm1.414-1.414l1.414-1.414-1.414-1.414-1.414 1.414 1.414 1.414zM7.242 21H3v-4.243L16.435 3.322a1 1 0 0 1 1.414 0l2.829 2.829a1 1 0 0 1 0 1.414L7.243 21z" fill="currentColor"/>
+                        </svg>
+                        Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Account Settings -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="card-title">Account Settings</h2>
+        </div>
+        <div class="card-body">
+            <div class="settings-list">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3 class="setting-name">Default Family</h3>
+                        <p class="setting-description">The family that will be selected by default when creating lists</p>
+                    </div>
+                    <div class="setting-value">
+                        {% if profile.default_family %}
+                        <span class="badge badge-primary">{{ profile.default_family.name }}</span>
+                        {% else %}
+                        <span class="text-muted">Not set</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3 class="setting-name">Dark Mode</h3>
+                        <p class="setting-description">Use dark color scheme for the app</p>
+                    </div>
+                    <div class="setting-value">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="darkModeToggle" {% if profile.dark_mode %}checked{% endif %}>
+                            <label class="custom-control-label" for="darkModeToggle"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Families Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="card-title">Your Families</h2>
+            <a href="{% url 'groceries:create_family' %}" class="btn btn-primary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-1">
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                </svg>
+                Create Family
+            </a>
+        </div>
+        <div class="card-body">
+            {% if families %}
+            <div class="family-cards">
+                {% for family in families %}
+                <div class="family-card">
+                    <div class="family-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36">
+                            <path fill="none" d="M0 0h24v24H0z"/>
+                            <path d="M12 11a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5zm-6.712 3.006a6.983 6.983 0 0 0-.28 1.65L5 16v6H2v-4.5a3.5 3.5 0 0 1 3.119-3.48l.17-.014zm13.424 0A3.501 3.501 0 0 1 22 17.5V22h-3v-6c0-.693-.1-1.362-.288-1.994zM5.5 8a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm13 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM12 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="family-card-content">
+                        <h3 class="family-card-name">{{ family.name }}</h3>
+                        <p class="family-card-meta">{{ family.members.count }} members</p>
+                        <div class="family-card-actions">
+                            <a href="{% url 'groceries:family_detail' pk=family.pk %}" class="btn btn-sm btn-outline">View</a>
+                            
+                            {% if profile.default_family != family %}
+                            <form method="post" action="{% url 'groceries:update_theme' %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="default_family" value="{{ family.id }}">
+                                <button type="submit" class="btn btn-sm btn-outline">Set as Default</button>
+                            </form>
+                            {% else %}
+                            <span class="badge badge-primary">Default</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64">
+                        <path fill="none" d="M0 0h24v24H0z"/>
+                        <path d="M12 11a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5zm-6.712 3.006a6.983 6.983 0 0 0-.28 1.65L5 16v6H2v-4.5a3.5 3.5 0 0 1 3.119-3.48l.17-.014zm13.424 0A3.501 3.501 0 0 1 22 17.5V22h-3v-6c0-.693-.1-1.362-.288-1.994zM5.5 8a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm13 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM12 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h3>No Families Yet</h3>
+                <p class="mb-3">Create a family to start sharing shopping lists</p>
+                <a href="{% url 'groceries:create_family' %}" class="btn btn-primary">Create Family</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Recent Lists -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="card-title">Recent Shopping Lists</h2>
+            <a href="{% url 'groceries:create_list' %}" class="btn btn-primary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-1">
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                </svg>
+                New List
+            </a>
+        </div>
+        <div class="card-body">
+            {% if recent_lists %}
+            <div class="list-group">
+                {% for list in recent_lists %}
+                <a href="{% url 'groceries:list_detail' pk=list.pk %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="list-info">
+                            <h5 class="mb-1">{{ list.name }}</h5>
+                            <p class="mb-1 d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="mr-1">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M21 11.646V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.354A3.985 3.985 0 0 1 2 9V3a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v6c0 1.014-.378 1.94-1 2.646z" fill="currentColor"/>
+                                </svg>
+                                {{ list.store.name }}
+                                
+                                <span class="mx-2">•</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="mr-1">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M12 11a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5z" fill="currentColor"/>
+                                </svg>
+                                {{ list.family.name }}
+                            </p>
+                        </div>
+                        
+                        <div class="list-progress">
+                            {% if list.completed %}
+                            <span class="badge badge-success">Completed</span>
+                            {% else %}
+                            <div class="progress" style="width: 100px; height: 8px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ list.progress_percentage }}%" aria-valuenow="{{ list.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted d-block text-right mt-1">{{ list.checked_items }}/{{ list.total_items }} items</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            <div class="text-center mt-3">
+                <a href="{% url 'groceries:lists' %}" class="btn btn-outline">View All Lists</a>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64">
+                        <path fill="none" d="M0 0h24v24H0z"/>
+                        <path d="M8 4h13v2H8V4zm-5-.5h3v3H3v-3zm0 7h3v3H3v-3zm0 7h3v3H3v-3zM8 11h13v2H8v-2zm0 7h13v2H8v-2z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h3>No Shopping Lists Yet</h3>
+                <p class="mb-3">Create a shopping list to start tracking your grocery needs</p>
+                <a href="{% url 'groceries:create_list' %}" class="btn btn-primary">Create List</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .profile-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: var(--primary);
+        color: var(--text-on-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 600;
+        margin-right: 1.5rem;
+    }
+    
+    .profile-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+    
+    .profile-meta-item {
+        display: flex;
+        align-items: center;
+        color: var(--text-tertiary);
+    }
+    
+    .profile-meta-item svg {
+        margin-right: 0.25rem;
+    }
+    
+    .settings-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .setting-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .setting-info {
+        flex: 1;
+    }
+    
+    .setting-name {
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .setting-description {
+        color: var(--text-tertiary);
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    
+    .setting-value {
+        margin-left: 1rem;
+    }
+    
+    .family-cards {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .family-card {
+        display: flex;
+        padding: 1rem;
+        background-color: var(--bg-primary);
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--border-light);
+    }
+    
+    .family-card-icon {
+        width: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        margin-right: 1rem;
+    }
+    
+    .family-card-content {
+        flex: 1;
+    }
+    
+    .family-card-name {
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .family-card-meta {
+        color: var(--text-tertiary);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .family-card-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state-icon {
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+    
+    @media (min-width: 768px) {
+        .family-cards {
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .profile-info {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .profile-avatar {
+            margin-right: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .profile-meta {
+            justify-content: center;
+        }
+        
+        .setting-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .setting-value {
+            margin-left: 0;
+            margin-top: 0.5rem;
+            align-self: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dark Mode Toggle functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('change', function() {
+                const isDarkMode = this.checked;
+                
+                // Update theme in DOM
+                document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+                
+                // Save preference to server
+                fetch('{% url "groceries:update_theme" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: `dark_mode=${isDarkMode}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Theme updated:', data);
+                })
+                .catch(error => {
+                    console.error('Error updating theme:', error);
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

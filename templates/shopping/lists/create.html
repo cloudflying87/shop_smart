@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create New List | ShopSmart{% endblock %}
+
+{% block header_title %}Create New List{% endblock %}
+
+{% block content %}
+<div class="create-list-container">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Create New Shopping List</h2>
+        </div>
+        <div class="card-body">
+            {% crispy form %}
+        </div>
+    </div>
+    
+    <!-- Recent Lists Reference -->
+    {% if recent_lists %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3 class="card-title">Your Recent Lists</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">You can select one of your recent lists as a template</p>
+            <div class="list-group">
+                {% for list in recent_lists|slice:":5" %}
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">{{ list.name }}</h5>
+                            <p class="mb-1 text-muted">{{ list.store.name }} • {{ list.family.name }}</p>
+                        </div>
+                        <div>
+                            {{ list.items.count }} items
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-list-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show template list selector only when a family is selected
+        const familySelect = document.getElementById('id_family');
+        const templateListGroup = document.querySelector('[id$="template_list"]').closest('.form-group');
+        
+        function updateTemplateListVisibility() {
+            if (familySelect.value) {
+                templateListGroup.style.display = 'block';
+                
+                // Filter template list to show only lists from the selected family
+                const templateList = document.getElementById('id_template_list');
+                const selectedFamily = familySelect.value;
+                
+                Array.from(templateList.options).forEach(option => {
+                    if (option.value === '') return; // Skip empty option
+                    
+                    // Get family ID from the option text (assuming format: "List Name - Store (Family)")
+                    const familyMatch = option.text.match(/\((.+?)\)$/);
+                    const family = familyMatch ? familyMatch[1] : '';
+                    
+                    // Hide options for other families
+                    if (family !== selectedFamily) {
+                        option.style.display = 'none';
+                    } else {
+                        option.style.display = 'block';
+                    }
+                });
+            } else {
+                templateListGroup.style.display = 'none';
+            }
+        }
+        
+        // Initial visibility
+        updateTemplateListVisibility();
+        
+        // Update on family change
+        familySelect.addEventListener('change', updateTemplateListVisibility);
+    });
+</script>
+{% endblock %}

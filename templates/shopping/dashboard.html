@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard | ShopSmart{% endblock %}
+
+{% block header_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    {% if family %}
+    <div class="dashboard-header">
+        <h1>Welcome to {{ family.name }}</h1>
+        <p class="text-muted">Here's what's happening with your shopping.</p>
+    </div>
+    
+    <!-- Recent Lists Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="card-title">Recent Lists</h2>
+            <a href="{% url 'groceries:create_list' %}" class="btn btn-primary btn-sm">New List</a>
+        </div>
+        <div class="card-body">
+            {% if recent_lists %}
+            <div class="list-group">
+                {% for list in recent_lists %}
+                <a href="{% url 'groceries:list_detail' pk=list.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">{{ list.name }}</h5>
+                        <p class="mb-1 text-muted">{{ list.store.name }} • {{ list.created_at|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="list-status">
+                        {% if list.completed %}
+                        <span class="badge badge-success">Completed</span>
+                        {% else %}
+                        <div class="progress-container">
+                            <div class="progress" style="width: 100px">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ list.progress_percentage }}%" aria-valuenow="{{ list.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted">{{ list.checked_items }}/{{ list.total_items }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% if recent_lists.count > 5 %}
+            <div class="text-center mt-3">
+                <a href="{% url 'groceries:lists' %}" class="btn btn-outline">View All Lists</a>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">
+                        <path fill="none" d="M0 0h24v24H0z"/>
+                        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h3>No Lists Yet</h3>
+                <p>Create your first shopping list to get started.</p>
+                <a href="{% url 'groceries:create_list' %}" class="btn btn-primary">Create List</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Recommended Items Section -->
+    {% if recommended_items %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="card-title">Recommended Items</h2>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">Based on your shopping history and preferences</p>
+            <div class="recommendation-items">
+                {% for item in recommended_items %}
+                <div class="recommendation-item">
+                    <div class="recommendation-img">
+                        {% if item.image_url %}
+                        <img src="{{ item.image_url }}" alt="{{ item.name }}">
+                        {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">
+                            <path fill="none" d="M0 0h24v24H0z"/>
+                            <path d="M3 10h18v10.004c0 .55-.445.996-.993.996H3.993A.994.994 0 0 1 3 20.004V10zm6 2v2h6v-2H9zM2 9V5.994c0-.55.445-.994.993-.994h18.014c.548 0 .993.445.993.994V9H2z" fill="currentColor"/>
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <div class="recommendation-info">
+                        <h5 class="recommendation-name">{{ item.name }}</h5>
+                        {% if item.brand %}
+                        <div class="recommendation-brand">{{ item.brand }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="add-recommendation">
+                        <button class="btn btn-sm btn-outline add-to-list-btn" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                            </svg>
+                            Add
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Stores Section -->
+    {% if stores %}
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="card-title">Your Stores</h2>
+            <a href="{% url 'groceries:create_store' %}" class="btn btn-primary btn-sm">Add Store</a>
+        </div>
+        <div class="card-body">
+            <div class="stores-grid">
+                {% for store in stores %}
+                <a href="{% url 'groceries:store_detail' pk=store.pk %}" class="store-card">
+                    <div class="store-card-icon">
+                        {% if store.logo %}
+                        <img src="{{ store.logo.url }}" alt="{{ store.name }}">
+                        {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36">
+                            <path fill="none" d="M0 0h24v24H0z"/>
+                            <path d="M21 11.646V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.354A3.985 3.985 0 0 1 2 9V3a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v6c0 1.014-.378 1.94-1 2.646zm-2 1.228a4.007 4.007 0 0 1-4-1.228A3.99 3.99 0 0 1 12 13a3.99 3.99 0 0 1-3-1.354 3.99 3.99 0 0 1-4 1.228V20h14v-7.126zM14 9a1 1 0 1 1 2 0 2 2 0 1 0 4 0V4H4v5a2 2 0 1 0 4 0 1 1 0 1 1 2 0 2 2 0 1 0 4 0z" fill="currentColor"/>
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <div class="store-card-name">{{ store.name }}</div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- No Family Selected or Created Yet -->
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64">
+                <path fill="none" d="M0 0h24v24H0z"/>
+                <path d="M12 11a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5zm-6.712 3.006a6.983 6.983 0 0 0-.28 1.65L5 16v6H2v-4.5a3.5 3.5 0 0 1 3.119-3.48l.17-.014zm13.424 0A3.501 3.501 0 0 1 22 17.5V22h-3v-6c0-.693-.1-1.362-.288-1.994zM5.5 8a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm13 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM12 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8z" fill="currentColor"/>
+            </svg>
+        </div>
+        <h2>Welcome to ShopSmart!</h2>
+        <p class="mb-4">You need to create or join a family group to start using ShopSmart.</p>
+        <div class="d-flex justify-content-center">
+            <a href="{% url 'groceries:create_family' %}" class="btn btn-primary mr-2">Create a Family</a>
+            <a href="{% url 'groceries:family' %}" class="btn btn-outline">View Families</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Item to List Modal -->
+<div class="modal" id="add-to-list-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 id="add-to-list-modal-title">Add to List</h2>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Choose a list to add <strong id="item-name-placeholder"></strong> to:</p>
+            <div id="list-selection">
+                {% if recent_lists %}
+                <div class="list-group mt-3 mb-3">
+                    {% for list in recent_lists %}
+                    {% if not list.completed %}
+                    <button class="list-group-item list-group-item-action select-list-btn" data-list-id="{{ list.id }}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ list.name }}</h5>
+                                <p class="mb-1 text-muted">{{ list.store.name }}</p>
+                            </div>
+                            <span class="badge badge-primary">Select</span>
+                        </div>
+                    </button>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    You don't have any active shopping lists. Create one first.
+                </div>
+                {% endif %}
+                <a href="{% url 'groceries:create_list' %}" class="btn btn-outline btn-sm btn-block">Create New List</a>
+            </div>
+            
+            <div id="add-to-list-form" style="display: none;">
+                <form>
+                    <input type="hidden" id="add-item-id">
+                    <input type="hidden" id="add-list-id">
+                    
+                    <div class="form-group">
+                        <label for="add-quantity">Quantity</label>
+                        <input type="number" id="add-quantity" class="form-control" min="0.01" step="0.01" value="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="add-unit">Unit</label>
+                        <input type="text" id="add-unit" class="form-control" placeholder="e.g. kg, pkg">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="add-note">Note</label>
+                        <textarea id="add-note" class="form-control" rows="2" placeholder="Add a note about this item"></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="back-to-lists" class="btn btn-outline" style="display: none;">Back to Lists</button>
+            <button id="add-to-list-confirm" class="btn btn-primary" style="display: none;">Add to List</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        background-color: var(--bg-primary);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .empty-state-icon {
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+    
+    .store-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        background-color: var(--bg-primary);
+        border-radius: var(--border-radius-md);
+        text-decoration: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .store-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .store-card-icon {
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+        color: var(--primary);
+    }
+    
+    .store-card-icon img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    
+    .store-card-name {
+        font-weight: 500;
+        text-align: center;
+        color: var(--text-primary);
+    }
+    
+    .stores-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+    
+    .progress-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add to list modal functionality
+        const addToListBtns = document.querySelectorAll('.add-to-list-btn');
+        const addToListModal = document.getElementById('add-to-list-modal');
+        const listSelection = document.getElementById('list-selection');
+        const addToListForm = document.getElementById('add-to-list-form');
+        const backToListsBtn = document.getElementById('back-to-lists');
+        const addToListConfirmBtn = document.getElementById('add-to-list-confirm');
+        const itemNamePlaceholder = document.getElementById('item-name-placeholder');
+        const selectListBtns = document.querySelectorAll('.select-list-btn');
+        
+        // Add item to list button click
+        addToListBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const itemName = this.dataset.itemName;
+                
+                document.getElementById('add-item-id').value = itemId;
+                itemNamePlaceholder.textContent = itemName;
+                
+                // Show list selection, hide form
+                listSelection.style.display = 'block';
+                addToListForm.style.display = 'none';
+                backToListsBtn.style.display = 'none';
+                addToListConfirmBtn.style.display = 'none';
+                
+                // Show modal
+                addToListModal.classList.add('active');
+            });
+        });
+        
+        // Select list button click
+        selectListBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const listId = this.dataset.listId;
+                document.getElementById('add-list-id').value = listId;
+                
+                // Hide list selection, show form
+                listSelection.style.display = 'none';
+                addToListForm.style.display = 'block';
+                backToListsBtn.style.display = 'block';
+                addToListConfirmBtn.style.display = 'block';
+            });
+        });
+        
+        // Back to lists button click
+        backToListsBtn.addEventListener('click', function() {
+            // Hide form, show list selection
+            listSelection.style.display = 'block';
+            addToListForm.style.display = 'none';
+            backToListsBtn.style.display = 'none';
+            addToListConfirmBtn.style.display = 'none';
+        });
+        
+        // Add to list confirm button click
+        addToListConfirmBtn.addEventListener('click', function() {
+            const itemId = document.getElementById('add-item-id').value;
+            const listId = document.getElementById('add-list-id').value;
+            const quantity = document.getElementById('add-quantity').value;
+            const unit = document.getElementById('add-unit').value;
+            const note = document.getElementById('add-note').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('item_id', itemId);
+            formData.append('quantity', quantity);
+            formData.append('unit', unit);
+            formData.append('note', note);
+            formData.append('csrfmiddlewaretoken', getCSRFToken());
+            
+            // Send request to add item to list
+            fetch(`/shopping/lists/${listId}/items/add/`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    addToListModal.classList.remove('active');
+                    
+                    // Show success message
+                    const message = document.createElement('div');
+                    message.className = 'message message-success';
+                    message.innerHTML = `
+                        <div>Item added to list successfully</div>
+                        <button class="message-close" aria-label="Close message">&times;</button>
+                    `;
+                    document.querySelector('.messages').appendChild(message);
+                    
+                    // Initialize close button
+                    message.querySelector('.message-close').addEventListener('click', function() {
+                        message.style.opacity = '0';
+                        message.style.transform = 'translateY(-10px)';
+                        message.style.transition = 'opacity 0.3s, transform 0.3s';
+                        
+                        setTimeout(() => {
+                            message.remove();
+                        }, 300);
+                    });
+                } else {
+                    console.error('Error adding item to list:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+        
+        // Close modal
+        const modalCloseBtn = addToListModal.querySelector('.modal-close');
+        const modalOverlay = addToListModal.querySelector('.modal-overlay');
+        
+        modalCloseBtn.addEventListener('click', function() {
+            addToListModal.classList.remove('active');
+        });
+        
+        modalOverlay.addEventListener('click', function() {
+            addToListModal.classList.remove('active');
+        });
+    });
+</script>
+{% endblock %}

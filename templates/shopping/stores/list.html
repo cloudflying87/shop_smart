@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Stores | ShopSmart{% endblock %}
+
+{% block header_title %}My Stores{% endblock %}
+
+{% block content %}
+<div class="stores-container">
+    <!-- Action Buttons -->
+    <div class="action-buttons mb-4">
+        <a href="{% url 'groceries:create_store' %}" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-1">
+                <path fill="none" d="M0 0h24v24H0z"/>
+                <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+            </svg>
+            Add Store
+        </a>
+    </div>
+    
+    {% if stores %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Your Stores</h2>
+        </div>
+        <div class="card-body">
+            <div class="store-grid">
+                {% for store in stores %}
+                <div class="store-card">
+                    <div class="store-icon">
+                        {% if store.logo %}
+                        <img src="{{ store.logo.url }}" alt="{{ store.name }}">
+                        {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">
+                            <path fill="none" d="M0 0h24v24H0z"/>
+                            <path d="M21 11.646V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.354A3.985 3.985 0 0 1 2 9V3a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v6c0 1.014-.378 1.94-1 2.646zm-2 1.228a4.007 4.007 0 0 1-4-1.228A3.99 3.99 0 0 1 12 13a3.99 3.99 0 0 1-3-1.354 3.99 3.99 0 0 1-4 1.228V20h14v-7.126zM14 9a1 1 0 1 1 2 0 2 2 0 1 0 4 0V4H4v5a2 2 0 1 0 4 0 1 1 0 1 1 2 0 2 2 0 1 0 4 0z" fill="currentColor"/>
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <div class="store-content">
+                        <h3 class="store-name">{{ store.name }}</h3>
+                        <p class="store-meta">
+                            {% if store.families.count > 0 %}
+                            <span class="store-family-count">Used by {{ store.families.count }} {% if store.families.count == 1 %}family{% else %}families{% endif %}</span>
+                            {% endif %}
+                            {% if store.address %}
+                            <span class="mx-2">•</span>
+                            <span class="store-address">{{ store.address|truncatechars:30 }}</span>
+                            {% endif %}
+                        </p>
+                        <div class="store-actions">
+                            <a href="{% url 'groceries:store_detail' pk=store.pk %}" class="btn btn-primary btn-sm">View</a>
+                            <a href="{% url 'groceries:edit_store' pk=store.pk %}" class="btn btn-outline btn-sm">Edit</a>
+                            <a href="{% url 'groceries:create_list' %}?store={{ store.pk }}" class="btn btn-outline btn-sm">Create List</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64">
+                        <path fill="none" d="M0 0h24v24H0z"/>
+                        <path d="M21 11.646V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.354A3.985 3.985 0 0 1 2 9V3a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v6c0 1.014-.378 1.94-1 2.646zm-2 1.228a4.007 4.007 0 0 1-4-1.228A3.99 3.99 0 0 1 12 13a3.99 3.99 0 0 1-3-1.354 3.99 3.99 0 0 1-4 1.228V20h14v-7.126zM14 9a1 1 0 1 1 2 0 2 2 0 1 0 4 0V4H4v5a2 2 0 1 0 4 0 1 1 0 1 1 2 0 2 2 0 1 0 4 0z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h2>No Stores Yet</h2>
+                <p class="mb-4">Add stores to start creating shopping lists</p>
+                <a href="{% url 'groceries:create_store' %}" class="btn btn-primary">Add Store</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .store-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .store-card {
+        display: flex;
+        background-color: var(--bg-primary);
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--border-light);
+        overflow: hidden;
+        padding: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .store-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .store-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 70px;
+        height: 70px;
+        margin-right: 1rem;
+        color: var(--primary);
+    }
+    
+    .store-icon img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    
+    .store-content {
+        flex: 1;
+    }
+    
+    .store-name {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.25rem;
+    }
+    
+    .store-meta {
+        color: var(--text-tertiary);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .store-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state-icon {
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+    
+    @media (min-width: 768px) {
+        .store-grid {
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        }
+    }
+</style>
+{% endblock %}
