@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dietary Preferences | ShopSmart{% endblock %}
+
+{% block header_title %}Dietary Preferences{% endblock %}
+
+{% block content %}
+<div class="dietary-preferences-container">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="card-title">Allergens</h2>
+            <p class="text-muted">Select allergens you want to avoid</p>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'groceries:update_allergens' %}">
+                {% csrf_token %}
+                <div class="allergens-grid">
+                    {% for allergen, info in common_allergens.items %}
+                    <div class="allergen-card">
+                        <input type="checkbox" id="allergen-{{ allergen }}" name="allergens" value="{{ allergen }}"
+                               class="allergen-checkbox" {% if allergen in user_allergens %}checked{% endif %}>
+                        <label for="allergen-{{ allergen }}" class="allergen-label">
+                            <div class="allergen-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM9 9h2v6H9V9zm4 0h2v6h-2V9z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="allergen-content">
+                                <div class="allergen-name">{{ allergen|title }}</div>
+                                <div class="allergen-description">
+                                    Examples: {{ info|join:", " }}
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Allergen Preferences</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Dietary Preferences</h2>
+            <p class="text-muted">Select your dietary preferences</p>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'groceries:update_preferences' %}">
+                {% csrf_token %}
+                <div class="preferences-grid">
+                    {% for preference, info in dietary_preferences.items %}
+                    <div class="preference-card">
+                        <input type="checkbox" id="preference-{{ preference }}" name="preferences" value="{{ preference }}"
+                               class="preference-checkbox" {% if preference in user_preferences %}checked{% endif %}>
+                        <label for="preference-{{ preference }}" class="preference-label">
+                            <div class="preference-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M15 3a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6zm-5 5v10h4V8h-4z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="preference-content">
+                                <div class="preference-name">{{ preference|replace:"_":" "|title }}</div>
+                                <div class="preference-description">{{ info.description }}</div>
+                                <div class="preference-avoid">
+                                    <strong>Avoids:</strong> {{ info.avoid|join:", " }}
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Dietary Preferences</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dietary-preferences-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .allergens-grid,
+    .preferences-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .allergen-card,
+    .preference-card {
+        position: relative;
+        border: 1px solid var(--border-light);
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
+    }
+    
+    .allergen-checkbox,
+    .preference-checkbox {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .allergen-label,
+    .preference-label {
+        display: flex;
+        padding: 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .allergen-checkbox:checked + .allergen-label,
+    .preference-checkbox:checked + .preference-label {
+        background-color: var(--primary-light);
+        border-left: 4px solid var(--primary);
+    }
+    
+    .allergen-icon,
+    .preference-icon {
+        color: var(--primary);
+        margin-right: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .allergen-content,
+    .preference-content {
+        flex: 1;
+    }
+    
+    .allergen-name,
+    .preference-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .allergen-description,
+    .preference-description,
+    .preference-avoid {
+        font-size: 0.9rem;
+        color: var(--text-tertiary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .preference-avoid {
+        margin-top: 0.5rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 2rem;
+    }
+    
+    @media (min-width: 768px) {
+        .allergens-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .preferences-grid {
+            grid-template-columns: repeat(1, 1fr);
+        }
+    }
+    
+    @media (min-width: 1024px) {
+        .preferences-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
