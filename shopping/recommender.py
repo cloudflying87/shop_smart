@@ -44,40 +44,61 @@ class ShoppingRecommender:
             # Base recommendations on family's purchase history
             recommendations = cls._get_family_favorites(family, store, limit)
             
+            # Convert to list to avoid the slice has been taken error
+            recommendations_list = list(recommendations)
+            
             # If we don't have enough recommendations, add seasonal items
-            if recommendations.count() < limit:
-                seasonal_items = cls._get_seasonal_recommendations(store, limit - recommendations.count())
-                recommendation_ids = list(recommendations.values_list('id', flat=True))
-                seasonal_items = seasonal_items.exclude(id__in=recommendation_ids)
-                recommendations = recommendations | seasonal_items
+            if len(recommendations_list) < limit:
+                seasonal_items = cls._get_seasonal_recommendations(store, limit - len(recommendations_list))
+                # Convert to list to avoid QuerySet operations after slicing
+                seasonal_items_list = list(seasonal_items)
+                
+                # Filter out duplicates
+                recommendation_ids = {item.id for item in recommendations_list}
+                filtered_seasonal = [item for item in seasonal_items_list if item.id not in recommendation_ids]
+                
+                # Combine recommendations
+                recommendations_list.extend(filtered_seasonal)
             
             # Add items that might need replenishment based on purchase frequency
-            if recommendations.count() < limit:
-                replenishment_items = cls._get_replenishment_suggestions(family, store, limit - recommendations.count())
-                recommendation_ids = list(recommendations.values_list('id', flat=True))
-                replenishment_items = replenishment_items.exclude(id__in=recommendation_ids)
-                recommendations = recommendations | replenishment_items
+            if len(recommendations_list) < limit:
+                replenishment_items = cls._get_replenishment_suggestions(family, store, limit - len(recommendations_list))
+                replenishment_items_list = list(replenishment_items)
+                
+                # Filter out duplicates
+                recommendation_ids = {item.id for item in recommendations_list}
+                filtered_replenishment = [item for item in replenishment_items_list if item.id not in recommendation_ids]
+                
+                # Combine recommendations
+                recommendations_list.extend(filtered_replenishment)
             
             # If still not enough, add collaborative filtering recommendations
-            if recommendations.count() < limit:
-                collaborative_items = cls._get_collaborative_recommendations(family, store, limit - recommendations.count())
-                recommendation_ids = list(recommendations.values_list('id', flat=True))
-                collaborative_items = collaborative_items.exclude(id__in=recommendation_ids)
-                recommendations = recommendations | collaborative_items
+            if len(recommendations_list) < limit:
+                collaborative_items = cls._get_collaborative_recommendations(family, store, limit - len(recommendations_list))
+                collaborative_items_list = list(collaborative_items)
+                
+                # Filter out duplicates
+                recommendation_ids = {item.id for item in recommendations_list}
+                filtered_collaborative = [item for item in collaborative_items_list if item.id not in recommendation_ids]
+                
+                # Combine recommendations
+                recommendations_list.extend(filtered_collaborative)
 
-            # Order by relevance and limit
-            recommendations = recommendations.order_by('-global_popularity')[:limit]
+            # Sort by global popularity and limit
+            recommendations_list.sort(key=lambda x: -x.global_popularity)
+            recommendations_list = recommendations_list[:limit]
             
-            return recommendations
+            # Return the compiled list
+            return recommendations_list
             
         except Exception as e:
             logger.error(f"Error generating recommendations for family {family.id}: {str(e)}")
             # Fallback to basic recommendations
             if store:
-                return GroceryItem.objects.filter(
+                return list(GroceryItem.objects.filter(
                     store_info__store=store
-                ).order_by('-global_popularity')[:limit]
-            return GroceryItem.objects.order_by('-global_popularity')[:limit]
+                ).order_by('-global_popularity')[:limit])
+            return list(GroceryItem.objects.order_by('-global_popularity')[:limit])
     
     @classmethod
     def get_recommendations_based_on_list(cls, shopping_list, limit=10):

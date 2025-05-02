@@ -389,6 +389,75 @@
         color: var(--text-primary);
     }
     
+    /* Modal styling */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1050;
+    }
+    
+    .modal.active {
+        display: block;
+    }
+    
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1051;
+    }
+    
+    .modal-container {
+        position: relative;
+        max-width: 500px;
+        margin: 50px auto;
+        background-color: var(--bg-primary);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-lg);
+        z-index: 1052;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        line-height: 1;
+        cursor: pointer;
+        color: var(--text-tertiary);
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        padding: 1rem;
+        border-top: 1px solid var(--border-light);
+        gap: 0.5rem;
+    }
+    
     @media (min-width: 768px) {
         .members-list {
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));

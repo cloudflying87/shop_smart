@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import F, Count, Q
 from django.views.generic import (
@@ -79,7 +80,7 @@ class DeleteStoreLocationView(LoginRequiredMixin, DeleteView):
 
 # Dashboard View
 class DashboardView(LoginRequiredMixin, TemplateView):
-    template_name = 'groceries/dashboard.html'
+    template_name = 'groceries/dashboard_simple.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -548,6 +549,9 @@ class FamilyDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
+        # Get current user's membership
+        context['user_membership'] = self.object.members.get(user=self.request.user)
+        
         # Get family members
         context['members'] = self.object.members.select_related('user')
         
@@ -645,19 +649,34 @@ class StoreCreateView(LoginRequiredMixin, CreateView):
         response = super().form_valid(form)
         
         # Add this store to the user's families
-        family_ids = self.request.POST.getlist('families')
+        family_ids = self.request.POST.getlist('families[]')
+        
+        # If we didn't get any values with families[], try the standard name
+        if not family_ids:
+            family_ids = self.request.POST.getlist('families')
+            
+        # Convert string IDs to integers
+        family_ids = [int(id) for id in family_ids if id.isdigit()]
+        
         families = Family.objects.filter(
             id__in=family_ids,
             members__user=self.request.user
         )
-        self.object.families.add(*families)
         
+        if families:
+            self.object.families.add(*families)
+            
         messages.success(self.request, f'Store "{form.instance.name}" created successfully')
         return response
     
     def get_success_url(self):
         return reverse('groceries:store_detail', kwargs={'pk': self.object.pk})
     
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['families'] = Family.objects.filter(
@@ -671,23 +690,42 @@ class StoreUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'groceries/stores/edit.html'
     context_object_name = 'store'
     
-    def get_queryset(self):
-        return GroceryStore.objects.filter(
-            families__members__user=self.request.user
-        ).distinct()
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
     
     def form_valid(self, form):
         response = super().form_valid(form)
         
-        # Update families
-        family_ids = self.request.POST.getlist('families')
+        # Update store families
+        family_ids = self.request.POST.getlist('families[]')
+        
+        # If we didn't get any values with families[], try the standard name
+        if not family_ids:
+            family_ids = self.request.POST.getlist('families')
+            
+        # Convert string IDs to integers
+        family_ids = [int(id) for id in family_ids if id.isdigit()]
+        
+        # Clear existing families and add selected ones
+        self.object.families.clear()
+        
         families = Family.objects.filter(
             id__in=family_ids,
             members__user=self.request.user
         )
         
-        # Clear existing and add new
-        self.object.families.clear()
+        if families:
+            self.object.families.add(*families)
+            
+        messages.success(self.request, f'Store "{form.instance.name}" updated successfully')
+        return response
+    
+    def get_queryset(self):
+        return GroceryStore.objects.filter(
+            families__members__user=self.request.user
+        ).distinct()
         self.object.families.add(*families)
         
         messages.success(self.request, f'Store "{form.instance.name}" updated successfully')
@@ -951,6 +989,80 @@ class InviteFamilyMemberView(LoginRequiredMixin, View):
                 
         except Exception as e:
             messages.error(request, f'Error inviting member: {str(e)}')
+            return redirect('groceries:family_detail', pk=family.id)
+
+
+class UpdateFamilyMemberView(LoginRequiredMixin, View):
+    """Update family member admin status"""
+    
+    def post(self, request, pk, member_pk):
+        try:
+            # Get the family and ensure the user is an admin
+            family = get_object_or_404(
+                Family, 
+                id=pk,
+                members__user=request.user,
+                members__is_admin=True
+            )
+            
+            # Get the member to update
+            member = get_object_or_404(FamilyMember, id=member_pk, family=family)
+            
+            # Don't allow users to modify their own admin status
+            if member.user == request.user:
+                messages.error(request, "You cannot modify your own admin status")
+                return redirect('groceries:family_detail', pk=family.id)
+            
+            # Update admin status
+            is_admin = request.POST.get('is_admin') == 'true'
+            member.is_admin = is_admin
+            member.save()
+            
+            action = "made an admin" if is_admin else "removed as admin"
+            messages.success(
+                request, 
+                f"{member.user.get_full_name() or member.user.username} {action} successfully"
+            )
+            
+            return redirect('groceries:family_detail', pk=family.id)
+                
+        except Exception as e:
+            messages.error(request, f'Error updating member: {str(e)}')
+            return redirect('groceries:family_detail', pk=family.id)
+
+
+class RemoveFamilyMemberView(LoginRequiredMixin, View):
+    """Remove a member from a family"""
+    
+    def post(self, request, pk, member_pk):
+        try:
+            # Get the family and ensure the user is an admin
+            family = get_object_or_404(
+                Family, 
+                id=pk,
+                members__user=request.user,
+                members__is_admin=True
+            )
+            
+            # Get the member to remove
+            member = get_object_or_404(FamilyMember, id=member_pk, family=family)
+            
+            # Don't allow users to remove themselves
+            if member.user == request.user:
+                messages.error(request, "You cannot remove yourself from the family. Transfer ownership first.")
+                return redirect('groceries:family_detail', pk=family.id)
+            
+            # Store the name for the success message
+            member_name = member.user.get_full_name() or member.user.username
+            
+            # Remove the member
+            member.delete()
+            
+            messages.success(request, f"{member_name} removed from family successfully")
+            return redirect('groceries:family_detail', pk=family.id)
+                
+        except Exception as e:
+            messages.error(request, f'Error removing member: {str(e)}')
             return redirect('groceries:family_detail', pk=family.id)
 
 class UpdateThemeView(LoginRequiredMixin, View):

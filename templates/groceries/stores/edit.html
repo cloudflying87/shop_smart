@@ -57,7 +57,7 @@
                             <div class="families-selector">
                                 {% for family in families %}
                                 <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input" id="family_{{ family.id }}" name="families" value="{{ family.id }}"
+                                    <input type="checkbox" class="custom-control-input" id="family_{{ family.id }}" name="families[]" value="{{ family.id }}"
                                            {% if family in store.families.all %}checked{% endif %}>
                                     <label class="custom-control-label" for="family_{{ family.id }}">{{ family.name }}</label>
                                 </div>

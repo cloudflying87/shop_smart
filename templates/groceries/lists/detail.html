@@ -821,20 +821,18 @@
                         resultsContainer.innerHTML = `
                             <div class="text-center p-3">
                                 <p>No items found matching "${query}"</p>
-                                <button class="btn btn-sm btn-primary mt-2" id="create-new-item">
+                                <a href="/shopping/items/create/?list={{ list.id }}&family={{ list.family.id }}" class="btn btn-sm btn-primary mt-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="mr-1">
                                         <path fill="none" d="M0 0h24v24H0z"/>
                                         <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
                                     </svg>
                                     Create New Item
-                                </button>
+                                </a>
                             </div>
                         `;
                         
-                        // Add click handler for create button
-                        document.getElementById('create-new-item').addEventListener('click', function() {
-                            window.location.href = `/shopping/items/create/?name=${encodeURIComponent(query)}&family={{ list.family.id }}&list={{ list.id }}`;
-                        });
+                        // We no longer need this click handler since we're using a direct link
+                        // The href attribute of the anchor tag handles navigation
                     }
                 })
                 .catch(error => {

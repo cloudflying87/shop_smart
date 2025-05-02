@@ -40,6 +40,8 @@ urlpatterns = [
     path('families/<int:pk>/', views.FamilyDetailView.as_view(), name='family_detail'),
     path('families/<int:pk>/edit/', views.FamilyUpdateView.as_view(), name='edit_family'),
     path('families/<int:pk>/invite/', views.InviteFamilyMemberView.as_view(), name='invite_member'),
+    path('families/<int:pk>/members/<int:member_pk>/update/', views.UpdateFamilyMemberView.as_view(), name='update_member'),
+    path('families/<int:pk>/members/<int:member_pk>/remove/', views.RemoveFamilyMemberView.as_view(), name='remove_member'),
     
     # Stores
     path('stores/', views.StoreListView.as_view(), name='stores'),
