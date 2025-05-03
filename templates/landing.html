@@ -1,0 +1,705 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="ShopSmart - Your personal grocery shopping assistant. Make shopping lists, track items, and save money on your grocery trips.">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>ShopSmart - Smart Grocery Shopping Assistant</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <link rel="apple-touch-icon" href="{% static 'icons/icon-192x192.png' %}">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        /* Custom landing page styles */
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #388E3C;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --section-padding: 4rem 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            overflow-x: hidden;
+        }
+        
+        .navbar {
+            background-color: transparent;
+            transition: background-color 0.3s ease;
+            padding: 1rem 2rem;
+        }
+        
+        .navbar.scrolled {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .navbar-brand img {
+            margin-right: 10px;
+            height: 40px;
+        }
+        
+        .navbar-toggler {
+            border: none;
+        }
+        
+        .nav-link {
+            color: white;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: rgba(255,255,255,0.85);
+        }
+        
+        .nav-item.action .nav-link {
+            background-color: white;
+            color: var(--primary-color);
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            margin-left: 1rem;
+            font-weight: 600;
+        }
+        
+        .nav-item.action .nav-link:hover {
+            background-color: rgba(255,255,255,0.9);
+        }
+        
+        .hero {
+            position: relative;
+            height: 100vh;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: white;
+        }
+        
+        .hero-text {
+            max-width: 600px;
+            z-index: 1;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .hero-image {
+            position: absolute;
+            right: -5%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50%;
+            max-width: 700px;
+            z-index: 0;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 50px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.25);
+        }
+        
+        .btn-outline-light {
+            border-radius: 50px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            margin-left: 1rem;
+        }
+        
+        .btn-light {
+            background-color: white;
+            color: var(--primary-color);
+            border-radius: 50px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-light:hover {
+            background-color: #f8f9fa;
+            color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .features {
+            padding: var(--section-padding);
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .section-title h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+        }
+        
+        .section-title p {
+            color: #6c757d;
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .feature-box {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .feature-box:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+        
+        .feature-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 70px;
+            width: 70px;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .feature-icon svg {
+            height: 35px;
+            width: 35px;
+        }
+        
+        .feature-box h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+        }
+        
+        .feature-box p {
+            color: #6c757d;
+            margin-bottom: 0;
+        }
+        
+        .how-it-works {
+            background-color: #f8f9fa;
+            padding: var(--section-padding);
+        }
+        
+        .step {
+            display: flex;
+            margin-bottom: 4rem;
+            align-items: center;
+        }
+        
+        .step:last-child {
+            margin-bottom: 0;
+        }
+        
+        .step-number {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-right: 1.5rem;
+        }
+        
+        .step-content h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .step-content p {
+            color: #6c757d;
+            margin-bottom: 0;
+        }
+        
+        .cta {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            padding: var(--section-padding);
+            color: white;
+            text-align: center;
+        }
+        
+        .cta h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        
+        .cta p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 3rem 0;
+        }
+        
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .footer-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .footer-brand span {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .footer p {
+            opacity: 0.7;
+        }
+        
+        .footer-links h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .footer-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 2rem;
+            padding-top: 2rem;
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 991px) {
+            .hero {
+                text-align: center;
+                padding: 6rem 0;
+                height: auto;
+            }
+            
+            .hero-text {
+                margin: 0 auto;
+            }
+            
+            .hero-image {
+                position: relative;
+                width: 80%;
+                max-width: 500px;
+                margin: 3rem auto 0;
+                right: auto;
+                top: auto;
+                transform: none;
+            }
+            
+            .navbar {
+                background-color: var(--primary-color);
+            }
+            
+            .nav-item.action .nav-link {
+                margin: 1rem 0 0;
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .section-title h2 {
+                font-size: 2rem;
+            }
+            
+            .btn-outline-light {
+                margin-left: 0;
+                margin-top: 1rem;
+            }
+            
+            .feature-box {
+                margin-bottom: 2rem;
+            }
+            
+            .step {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .step-number {
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+            
+            .footer {
+                text-align: center;
+            }
+            
+            .footer-links {
+                margin-top: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="{% static 'icons/logo.svg' %}" alt="ShopSmart Logo">
+                ShopSmart
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#how-it-works">How It Works</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Login</a>
+                    </li>
+                    <li class="nav-item action">
+                        <a class="nav-link" href="{% url 'register' %}">Sign Up Free</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="hero-text">
+                        <h1>Simplify Your Grocery Shopping</h1>
+                        <p>Create and share shopping lists, find the best deals, and never forget an item again with ShopSmart, your personal grocery shopping assistant.</p>
+                        <div class="d-flex flex-wrap">
+                            <a href="{% url 'register' %}" class="btn btn-light">Get Started - It's Free</a>
+                            <a href="#how-it-works" class="btn btn-outline-light">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <img src="{% static 'img/hero-image.png' %}" alt="ShopSmart App" class="hero-image">
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Make Shopping Easier</h2>
+                <p>ShopSmart helps you save time, money, and reduce food waste with these powerful features</p>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <h3>Smart Lists</h3>
+                        <p>Organize shopping lists by store, family, or occasion. Sort items by store aisle to save time while shopping.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M12 11a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5zm-6.712 3.006a6.983 6.983 0 0 0-.28 1.65L5 16v6H2v-4.5a3.5 3.5 0 0 1 3.119-3.48l.17-.014zm13.424 0A3.501 3.501 0 0 1 22 17.5V22h-3v-6c0-.693-.1-1.362-.288-1.994zM5.5 8a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm13 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM12 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <h3>Family Sharing</h3>
+                        <p>Share lists with family members, roommates, or friends. Everyone can add items and check them off in real-time.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M21 11.646V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.354A3.985 3.985 0 0 1 2 9V3a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v6c0 1.014-.378 1.94-1 2.646z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <h3>Store Organization</h3>
+                        <p>Save your favorite stores and organize them by location. View store-specific deals and promotions.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm6.5-12C16.35 4 15 2.65 15 .5c3.38 0 6 2.57 6 5.94 0 2.78-3.95 6.06-4.61 6.67l-1.49-1.49A5.99 5.99 0 0 0 18.5 4zM12.7 20.7c1.2-.96 3.37-2.02 4.18-2.86a.4.4 0 0 1 .48-.05c.77.45 1.45.8 2.07 1.05.35.14.64.42.64.79 0 .48-.39.87-.87.87H4.8c-.48 0-.87-.39-.87-.87 0-.37.29-.65.64-.79.62-.26 1.3-.6 2.07-1.05a.4.4 0 0 1 .48.05c.8.84 2.98 1.9 4.18 2.86.1.08.22.12.35.12s.25-.04.35-.12z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <h3>Smart Recommendations</h3>
+                        <p>Get personalized product recommendations based on your purchase history and preferences.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M8 4a8 8 0 1 1 0 16A8 8 0 0 1 8 4zm12.42 10.42a.5.5 0 0 1 .708 0l2.67 2.67a.5.5 0 0 1-.708.708l-2.67-2.67a.5.5 0 0 1 0-.708zM8 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <h3>Price Tracking</h3>
+                        <p>Track prices over time and get notified when your favorite items go on sale. Compare prices across different stores.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <div class="feature-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M13 21h5v2H6v-2h5v-1.05a10.002 10.002 0 0 1-7.684-4.988l1.737-.992A8 8 0 1 0 15.97 3.053l.992-1.737A9.996 9.996 0 0 1 22 10c0 5.185-3.947 9.449-9 9.95V21zm-1-4a7 7 0 1 1 0-14 7 7 0 0 1 0 14zm0-2a5 5 0 1 0 0-10 5 5 0 0 0 0 10z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <h3>Offline Access</h3>
+                        <p>Access your shopping lists even without internet connection. Changes sync automatically when you're back online.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-title">
+                <h2>How It Works</h2>
+                <p>Getting started with ShopSmart is quick and easy</p>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Create an Account</h3>
+                            <p>Sign up for a free account to get started. You'll immediately have access to all features without any payment required.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Set Up Your Family</h3>
+                            <p>Create a family group and invite members to join. This allows everyone to collaborate on shopping lists in real-time.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Add Your Favorite Stores</h3>
+                            <p>Enter the stores you shop at frequently. You can organize them by location and add store sections for easier shopping.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Create Shopping Lists</h3>
+                            <p>Start creating shopping lists for your different needs. Add items, organize by store section, and share with family members.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h3>Shop Efficiently</h3>
+                            <p>Use the app while shopping to check off items as you go. Items are organized by store section to help you navigate efficiently.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>Ready to Shop Smarter?</h2>
+            <p>Join thousands of shoppers who are saving time and money with ShopSmart. Sign up today and take the stress out of grocery shopping!</p>
+            <a href="{% url 'register' %}" class="btn btn-light btn-lg">Create Your Free Account</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="footer-brand">
+                        <img src="{% static 'icons/logo.svg' %}" alt="ShopSmart Logo">
+                        <span>ShopSmart</span>
+                    </div>
+                    <p>ShopSmart helps you organize your grocery shopping with smart lists, family sharing, and personalized recommendations.</p>
+                </div>
+                <div class="col-md-2 col-sm-6">
+                    <div class="footer-links">
+                        <h4>Links</h4>
+                        <ul>
+                            <li><a href="#features">Features</a></li>
+                            <li><a href="#how-it-works">How It Works</a></li>
+                            <li><a href="{% url 'login' %}">Login</a></li>
+                            <li><a href="{% url 'register' %}">Sign Up</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-6">
+                    <div class="footer-links">
+                        <h4>Help</h4>
+                        <ul>
+                            <li><a href="#">FAQ</a></li>
+                            <li><a href="#">Support</a></li>
+                            <li><a href="#">Tutorials</a></li>
+                            <li><a href="#">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="footer-links">
+                        <h4>Contact Us</h4>
+                        <ul>
+                            <li><a href="mailto:support@shopsmart.app">support@shopsmart.app</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; {% now "Y" %} ShopSmart. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom scripts -->
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    window.scrollTo({
+                        top: target.offsetTop - 70,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

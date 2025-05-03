@@ -18,7 +18,8 @@ from .models import (
 )
 from .forms import (
     ShoppingListForm, FamilyForm, GroceryStoreForm, GroceryItemForm,
-    StoreLocationForm, ShoppingListItemForm, UserProfileForm, FamilyMemberForm
+    StoreLocationForm, ShoppingListItemForm, UserProfileForm, FamilyMemberForm, 
+    UserRegistrationForm
 )
 from .recommender import ShoppingRecommender
 
@@ -850,8 +851,16 @@ class UserProfileUpdateView(LoginRequiredMixin, UpdateView):
         return response
 
 # Offline View
+class LandingPageView(TemplateView):
+    template_name = 'landing.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('groceries:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
 class OfflineView(TemplateView):
-    template_name = 'shopping/offline.html'
+    template_name = 'groceries/offline.html'
 
 class BarcodeSearchView(LoginRequiredMixin, View):
     """API endpoint to search for items by barcode"""
@@ -1226,3 +1235,40 @@ class GroceryItemUpdateView(LoginRequiredMixin, UpdateView):
         context['categories'] = ProductCategory.objects.all().order_by('name')
         
         return context
+
+
+class UserRegistrationView(CreateView):
+    """View for user registration"""
+    form_class = UserRegistrationForm
+    template_name = 'groceries/auth/register.html'
+    success_url = reverse_lazy('login')
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Redirect to dashboard if user is already authenticated
+        if request.user.is_authenticated:
+            return redirect('groceries:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        
+        # Create a default family for the new user
+        family = Family.objects.create(
+            name=f"{self.object.username}'s Family",
+            created_by=self.object
+        )
+        
+        # Add the user as a family member and admin
+        FamilyMember.objects.create(
+            user=self.object,
+            family=family,
+            is_admin=True
+        )
+        
+        # Set this as the default family in their profile
+        profile = self.object.profile
+        profile.default_family = family
+        profile.save()
+        
+        messages.success(self.request, "Your account has been created successfully! You can now log in.")
+        return response

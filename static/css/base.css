@@ -902,6 +902,34 @@ a:hover {
   border-width: 0;
 }
 
+/* ========== Logout Form Styling ========== */
+.logout-form {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.logout-button {
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  align-items: center;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.logout-button:hover {
+  background-color: var(--bg-secondary);
+}
+
+.logout-button svg {
+  margin-right: var(--space-md);
+}
+
 /* ========== Media Queries ========== */
 @media (min-width: 576px) {
   .container, .container-sm {
