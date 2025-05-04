@@ -106,6 +106,26 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             else:
                 context['recent_lists'] = []
                 context['recommended_items'] = []
+            
+            # Count dashboard statistics
+            # Get families the user belongs to
+            user_families = Family.objects.filter(members__user=self.request.user)
+            context['family_count'] = user_families.count()
+            
+            # Get all shopping lists for these families
+            context['shopping_lists_count'] = ShoppingList.objects.filter(
+                family__in=user_families
+            ).count()
+            
+            # Get all stores for these families
+            context['store_count'] = GroceryStore.objects.filter(
+                families__in=user_families
+            ).distinct().count()
+            
+            # Get all products (grocery items) associated with these families
+            context['product_count'] = GroceryItem.objects.filter(
+                families__in=user_families
+            ).distinct().count()
                 
             # Get stores that user has access to through family memberships
             context['stores'] = GroceryStore.objects.filter(
@@ -1230,6 +1250,8 @@ class GroceryItemListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         # Filter query by search term if provided
         search_term = self.request.GET.get('search', '')
+        
+        # Start with basic queryset filtering for items accessible to the user
         queryset = GroceryItem.objects.filter(
             Q(created_by=self.request.user) | 
             Q(families__members__user=self.request.user)
@@ -1241,6 +1263,42 @@ class GroceryItemListView(LoginRequiredMixin, ListView):
                 Q(brand__icontains=search_term) |
                 Q(category__name__icontains=search_term)
             )
+            
+        # Annotate the queryset with lowest price info
+        # First, get user's accessible stores
+        user_families = Family.objects.filter(members__user=self.request.user)
+        accessible_stores = GroceryStore.objects.filter(
+            families__in=user_families
+        ).distinct()
+        
+        # Add annotations for lowest price and associated store
+        from django.db.models import Min, OuterRef, Subquery
+        
+        # Subquery to find the lowest price for each item
+        # This complex query handles cases where typical_price might be NULL
+        # by falling back to last_price or average_price
+        from django.db.models.functions import Coalesce
+        
+        store_info_subquery = ItemStoreInfo.objects.filter(
+            item=OuterRef('pk'),
+            store__in=accessible_stores
+        ).annotate(
+            effective_price=Coalesce('typical_price', 'last_price', 'average_price')
+        ).exclude(
+            effective_price__isnull=True
+        ).order_by('effective_price')
+        
+        queryset = queryset.annotate(
+            lowest_price=Subquery(
+                store_info_subquery.values('effective_price')[:1]
+            ),
+            lowest_price_store_id=Subquery(
+                store_info_subquery.values('store__id')[:1]
+            ),
+            lowest_price_store_name=Subquery(
+                store_info_subquery.values('store__name')[:1]
+            )
+        )
             
         return queryset.distinct().order_by('name')
         
@@ -1334,6 +1392,35 @@ class ItemStoreLocationView(LoginRequiredMixin, UpdateView):
     
     def get_success_url(self):
         return reverse('groceries:item_store_locations', kwargs={'pk': self.object.pk})
+
+class GroceryItemDeleteView(LoginRequiredMixin, DeleteView):
+    """View for deleting a grocery item"""
+    model = GroceryItem
+    template_name = 'groceries/items/confirm_delete.html'
+    context_object_name = 'item'
+    success_url = reverse_lazy('groceries:items')
+    
+    def get_queryset(self):
+        # Users can only delete items they created
+        return GroceryItem.objects.filter(
+            Q(created_by=self.request.user) | 
+            Q(families__members__user=self.request.user, families__members__is_admin=True)
+        ).distinct()
+    
+    def delete(self, request, *args, **kwargs):
+        item = self.get_object()
+        item_name = item.name
+        
+        # Check if item is used in any shopping lists
+        list_items = ShoppingListItem.objects.filter(item=item)
+        if list_items.exists():
+            messages.warning(request, f'Cannot delete "{item_name}" as it is used in {list_items.count()} shopping lists')
+            return redirect('groceries:item_detail', pk=item.id)
+        
+        # If not used in lists, proceed with deletion
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, f'Product "{item_name}" has been deleted')
+        return response
 
 class GroceryItemUpdateView(LoginRequiredMixin, UpdateView):
     model = GroceryItem

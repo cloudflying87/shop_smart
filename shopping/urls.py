@@ -31,6 +31,7 @@ urlpatterns = [
     path('items/create/', views.GroceryItemCreateView.as_view(), name='create_item'),
     path('items/<int:pk>/', views.GroceryItemDetailView.as_view(), name='item_detail'),
     path('items/<int:pk>/edit/', views.GroceryItemUpdateView.as_view(), name='edit_item'),
+    path('items/<int:pk>/delete/', views.GroceryItemDeleteView.as_view(), name='delete_item'),
     path('items/<int:pk>/store-locations/', views.ItemStoreLocationView.as_view(), name='item_store_locations'),
     
     # Barcode API Endpoint - duplicated at the root level in shop_smart/urls.py

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete {{ item.name }} | ShopSmart{% endblock %}
+{% block header_title %}Delete Product{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="h4 mb-4">Are you sure you want to delete "{{ item.name }}"?</h2>
+            
+            <div class="item-details mb-4">
+                <div><strong>Brand:</strong> {{ item.brand|default:"Not specified" }}</div>
+                {% if item.category %}
+                <div><strong>Category:</strong> {{ item.category.name }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="alert alert-warning mb-4">
+                <strong>Warning:</strong> This action cannot be undone. This will permanently delete this product.
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="button-row">
+                    <a href="{% url 'groceries:item_detail' pk=item.id %}" class="btn btn-outline mr-2">Cancel</a>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+    
+    .item-details {
+        background-color: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    .button-row {
+        display: flex;
+        justify-content: flex-end;
+    }
+</style>
+{% endblock %}
