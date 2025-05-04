@@ -27,12 +27,14 @@ urlpatterns = [
     path('lists/<int:list_id>/items/<int:item_id>/remove/', views.RemoveListItemView.as_view(), name='remove_list_item'),
     
     # Grocery Items
+    path('items/', views.GroceryItemListView.as_view(), name='items'),
     path('items/create/', views.GroceryItemCreateView.as_view(), name='create_item'),
     path('items/<int:pk>/', views.GroceryItemDetailView.as_view(), name='item_detail'),
     path('items/<int:pk>/edit/', views.GroceryItemUpdateView.as_view(), name='edit_item'),
+    path('items/<int:pk>/store-locations/', views.ItemStoreLocationView.as_view(), name='item_store_locations'),
     
-    # Barcode API Endpoint
-    path('api/items/barcode/<str:barcode>/', views.BarcodeSearchView.as_view(), name='barcode_search'),
+    # Barcode API Endpoint - duplicated at the root level in shop_smart/urls.py
+    # path('api/items/barcode/<str:barcode>/', views.BarcodeSearchView.as_view(), name='barcode_search'),
     
     # Families
     path('families/', views.FamilyListView.as_view(), name='family'),
@@ -54,8 +56,8 @@ urlpatterns = [
     path('stores/<int:store_id>/locations/<int:pk>/edit/', views.EditStoreLocationView.as_view(), name='edit_location'),
     path('stores/<int:store_id>/locations/<int:pk>/delete/', views.DeleteStoreLocationView.as_view(), name='delete_location'),
     
-    # API endpoints
-    path('api/items/search/', views.GroceryItemSearchView.as_view(), name='item_search'),
+    # API endpoints - these are duplicated at the root level in shop_smart/urls.py
+    # path('api/items/search/', views.GroceryItemSearchView.as_view(), name='item_search'),
     
     # User Profile
     path('profile/', views.UserProfileView.as_view(), name='profile'),

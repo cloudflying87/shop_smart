@@ -4,15 +4,15 @@
  */
 
 // Cache names
-const STATIC_CACHE = 'shopsmart-static-v1';
-const DYNAMIC_CACHE = 'shopsmart-dynamic-v1';
-const API_CACHE = 'shopsmart-api-v1';
-const IMAGE_CACHE = 'shopsmart-images-v1';
+const STATIC_CACHE = 'shopsmart-static-v2';
+const DYNAMIC_CACHE = 'shopsmart-dynamic-v2';
+const API_CACHE = 'shopsmart-api-v2';
+const IMAGE_CACHE = 'shopsmart-images-v2';
 
 // Resources to cache immediately on install
 const STATIC_ASSETS = [
-  '/',
-  '/offline/',
+  '/', 
+  '/app/',
   '/static/css/base.css',
   '/static/css/mobile.css',
   '/static/js/app.js',
@@ -24,7 +24,7 @@ const STATIC_ASSETS = [
   '/static/icons/favicon.ico',
   '/static/icons/icon-192x192.png',
   '/static/icons/icon-512x512.png',
-  '/static/img/logo.svg'
+  '/static/icons/logo.svg'
 ];
 
 // Maximum number of items in dynamic cache
@@ -32,11 +32,24 @@ const DYNAMIC_CACHE_LIMIT = 100;
 
 // Install event - cache static assets
 self.addEventListener('install', event => {
+  console.log('Service Worker: Installing new version');
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(cache => {
         // Pre-cache static assets
-        return cache.addAll(STATIC_ASSETS);
+        console.log('Service Worker: Caching static assets', STATIC_ASSETS);
+        return cache.addAll(STATIC_ASSETS)
+          .catch(error => {
+            console.error('Service Worker: Cache addAll error', error);
+            // Try caching assets one by one to identify the problematic one
+            const cachePromises = STATIC_ASSETS.map(url => {
+              return cache.add(url).catch(err => {
+                console.error(`Failed to cache asset: ${url}`, err);
+                return Promise.resolve(); // Continue despite error
+              });
+            });
+            return Promise.all(cachePromises);
+          });
       })
       .then(() => {
         // Skip waiting to activate immediately
@@ -152,7 +165,7 @@ self.addEventListener('fetch', event => {
                 console.error('Service Worker fetch error:', error);
                 // Return offline fallback for HTML requests
                 if (event.request.headers.get('accept')?.includes('text/html')) {
-                  return caches.match('/offline/');
+                  return caches.match('/app/offline/');
                 }
                 return new Response('Network error occurred', { status: 408, headers: { 'Content-Type': 'text/plain' } });
               });
@@ -185,7 +198,7 @@ self.addEventListener('fetch', event => {
                 
                 // Return offline fallback for HTML requests
                 if (event.request.headers.get('accept')?.includes('text/html')) {
-                  return caches.match('/offline/');
+                  return caches.match('/app/offline/');
                 }
                 
                 return new Response('Network error occurred', { status: 408, headers: { 'Content-Type': 'text/plain' } });

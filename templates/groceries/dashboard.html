@@ -361,7 +361,7 @@
             formData.append('csrfmiddlewaretoken', getCSRFToken());
             
             // Send request to add item to list
-            fetch(`/shopping/lists/${listId}/items/add/`, {
+            fetch(`/app/lists/${listId}/items/add/`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin'

@@ -265,7 +265,7 @@
             document.body.appendChild(loadingModal);
             
             // API request
-            fetch(`/groceries/api/items/barcode/${barcode}/`)
+            fetch(`/api/items/barcode/${barcode}/`)
                 .then(response => response.json())
                 .then(data => {
                     loadingModal.remove();
@@ -295,7 +295,7 @@
                             alert('Product information loaded! Review and make any needed changes before saving.');
                         } else {
                             // No form on page, redirect to the item detail page
-                            window.location.href = `/groceries/items/${data.id}/`;
+                            window.location.href = `/app/items/${data.id}/`;
                         }
                     } else {
                         // Product not found in database

@@ -2,7 +2,7 @@
   "name": "ShopSmart",
   "short_name": "ShopSmart",
   "description": "Your personal grocery shopping assistant",
-  "start_url": "/",
+  "start_url": "/app/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4CAF50",
@@ -62,14 +62,14 @@
       "name": "New Shopping List",
       "short_name": "New List",
       "description": "Create a new shopping list",
-      "url": "/lists/create/",
+      "url": "/app/lists/create/",
       "icons": [{ "src": "icons/icon-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "My Lists",
       "short_name": "Lists",
       "description": "View your shopping lists",
-      "url": "/lists/",
+      "url": "/app/lists/",
       "icons": [{ "src": "icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ],

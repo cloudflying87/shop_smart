@@ -6,7 +6,7 @@
 {% block header_title %}{{ list.name }}{% endblock %}
 
 {% block content %}
-<div class="list-detail-container">
+<div class="list-detail-container" data-list-id="{{ list.id }}" id="shopping-list">
     <!-- List Header -->
     <div class="list-header card mb-4">
         <div class="card-body">
@@ -124,9 +124,9 @@
             </form>
             
             <!-- Search Results Container -->
-            <div id="search-results" class="search-results mt-3" style="display: none;">
+            <div id="search-results" class="search-results mt-3" style="display: none; position: relative; z-index: 100;">
                 <h3 class="results-title mb-2">Results</h3>
-                <div id="results-container" class="results-container"></div>
+                <div id="results-container" class="results-container border rounded p-2" style="background: white;"></div>
             </div>
         </div>
     </div>
@@ -632,46 +632,8 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Toggle item checked state
-        const checkboxes = document.querySelectorAll('.custom-checkbox');
-        
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('click', function() {
-                const itemId = this.dataset.itemId;
-                const listId = this.dataset.listId;
-                
-                // Optimistic UI update
-                this.classList.toggle('checked');
-                const listItem = this.closest('.list-item');
-                listItem.classList.toggle('checked');
-                
-                // Send request to server
-                fetch(`/shopping/lists/${listId}/items/${itemId}/toggle/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCSRFToken()
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.success) {
-                        // Revert UI if there was an error
-                        this.classList.toggle('checked');
-                        listItem.classList.toggle('checked');
-                        console.error('Error toggling item:', data.error);
-                    }
-                    
-                    // Update progress bar
-                    updateProgress();
-                })
-                .catch(error => {
-                    // Revert UI on error
-                    this.classList.toggle('checked');
-                    listItem.classList.toggle('checked');
-                    console.error('Error:', error);
-                });
-            });
-        });
+        // Note: Checkbox toggling is now handled by mobile-nav.js
+        // We'll just define the updateProgress function here
         
         // Price update modal
         const priceModal = document.getElementById('price-modal');
@@ -718,7 +680,7 @@
             formData.append('csrfmiddlewaretoken', getCSRFToken());
             
             // Send request to server
-            fetch(`/shopping/lists/${listId}/items/${itemId}/price/`, {
+            fetch(`/app/lists/${listId}/items/${itemId}/price/`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin'
@@ -782,9 +744,10 @@
             searchResults.style.display = 'block';
             
             // Send search request
-            fetch(`/shopping/api/items/search/?family={{ list.family.id }}&store={{ list.store.id }}&query=${encodeURIComponent(query)}`)
+            fetch(`/api/items/search/?family={{ list.family.id }}&store={{ list.store.id }}&query=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
+                    console.log("Search results:", data); // Debug output
                     if (data.items && data.items.length > 0) {
                         // Display results
                         resultsContainer.innerHTML = '';
@@ -821,7 +784,7 @@
                         resultsContainer.innerHTML = `
                             <div class="text-center p-3">
                                 <p>No items found matching "${query}"</p>
-                                <a href="/shopping/items/create/?list={{ list.id }}&family={{ list.family.id }}" class="btn btn-sm btn-primary mt-2">
+                                <a href="/app/items/create/?list={{ list.id }}&family={{ list.family.id }}" class="btn btn-sm btn-primary mt-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="mr-1">
                                         <path fill="none" d="M0 0h24v24H0z"/>
                                         <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
@@ -894,7 +857,7 @@
             formData.append('csrfmiddlewaretoken', getCSRFToken());
             
             // Send request to server
-            fetch(`/shopping/lists/{{ list.id }}/items/add/`, {
+            fetch(`/app/lists/{{ list.id }}/items/add/`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin'
@@ -926,7 +889,7 @@
                 
                 if (confirm('Are you sure you want to remove this item from the list?')) {
                     // Send request to server
-                    fetch(`/shopping/lists/${listId}/items/${itemId}/remove/`, {
+                    fetch(`/app/lists/${listId}/items/${itemId}/remove/`, {
                         method: 'POST',
                         headers: {
                             'X-CSRFToken': getCSRFToken()
@@ -996,13 +959,13 @@
                         
                         // Set up confirm button
                         confirmDeleteBtn.onclick = function() {
-                            window.location.href = `/shopping/lists/${listId}/delete/`;
+                            window.location.href = `/app/lists/${listId}/delete/`;
                         };
                         break;
                         
                     case 'duplicate':
                         // Send duplicate request
-                        fetch(`/shopping/lists/${listId}/duplicate/`, {
+                        fetch(`/app/lists/${listId}/duplicate/`, {
                             method: 'POST',
                             headers: {
                                 'X-CSRFToken': getCSRFToken()
@@ -1019,7 +982,7 @@
                         
                     case 'complete':
                         // Send complete request
-                        fetch(`/shopping/lists/${listId}/complete/`, {
+                        fetch(`/app/lists/${listId}/complete/`, {
                             method: 'POST',
                             headers: {
                                 'X-CSRFToken': getCSRFToken()
@@ -1036,7 +999,7 @@
                         
                     case 'reopen':
                         // Send reopen request
-                        fetch(`/shopping/lists/${listId}/reopen/`, {
+                        fetch(`/app/lists/${listId}/reopen/`, {
                             method: 'POST',
                             headers: {
                                 'X-CSRFToken': getCSRFToken()

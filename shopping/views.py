@@ -165,12 +165,13 @@ class ShoppingListCreateView(LoginRequiredMixin, CreateView):
             return HttpResponseForbidden("You don't have permission to create lists for this family")
         
         # Process template list if selected
-        template_list_id = form.cleaned_data.get('template_list')
+        template_list = form.cleaned_data.get('template_list')
         
         response = super().form_valid(form)
         
-        if template_list_id:
-            self.duplicate_template_items(template_list_id)
+        if template_list:
+            # Use the template list object directly instead of trying to get its ID
+            self.duplicate_template_items(template_list)
         
         messages.success(self.request, f'Shopping list "{form.instance.name}" created successfully')
         return response
@@ -178,21 +179,19 @@ class ShoppingListCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse('groceries:list_detail', kwargs={'pk': self.object.pk})
     
-    def duplicate_template_items(self, template_list_id):
-        try:
-            template_list = ShoppingList.objects.get(id=template_list_id)
-            if template_list.family == self.object.family:
-                for item in template_list.items.all():
-                    ShoppingListItem.objects.create(
-                        shopping_list=self.object,
-                        item=item.item,
-                        quantity=item.quantity,
-                        unit=item.unit,
-                        note=item.note,
-                        sort_order=item.sort_order
-                    )
-        except ShoppingList.DoesNotExist:
-            pass
+    def duplicate_template_items(self, template_list):
+        """Duplicate items from a template list to the current list"""
+        # Check if template list belongs to the same family
+        if template_list.family == self.object.family:
+            for item in template_list.items.all():
+                ShoppingListItem.objects.create(
+                    shopping_list=self.object,
+                    item=item.item,
+                    quantity=item.quantity,
+                    unit=item.unit,
+                    note=item.note,
+                    sort_order=item.sort_order
+                )
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -258,15 +257,20 @@ class ShoppingListDetailView(LoginRequiredMixin, DetailView):
                 uncategorized_items.append(item)
         
         # Get recommendations for this list
-        recommended_items = ShoppingRecommender.get_recommendations_based_on_list(
-            shopping_list, limit=8
-        )
+        try:
+            recommended_items = ShoppingRecommender.get_recommendations_based_on_list(
+                shopping_list, limit=8
+            )
+        except Exception as e:
+            logger.error(f"Error getting recommendations: {str(e)}")
+            recommended_items = []
         
         context['locations'] = locations
         context['uncategorized_items'] = uncategorized_items
         context['recommended_items'] = recommended_items
         context['total_items'] = list_items.count()
         context['checked_items'] = list_items.filter(checked=True).count()
+        context['list_items'] = list_items  # Add list_items to context
         
         return context
 
@@ -766,13 +770,22 @@ class GroceryItemSearchView(LoginRequiredMixin, View):
                 store = GroceryStore.objects.get(id=store_id)
             
             if query:
-                # Search for items by name/brand matching the query
+                # Search for items by name/brand matching the query (case insensitive)
                 items = GroceryItem.objects.filter(
-                    Q(name__icontains=query) | Q(brand__icontains=query)
-                )
+                    Q(name__icontains=query) | 
+                    Q(brand__icontains=query) |
+                    Q(description__icontains=query) |
+                    Q(category__name__icontains=query)
+                ).distinct()
                 
                 if store:
-                    items = items.filter(store_info__store=store)
+                    # Use a left outer join to include items without store info
+                    items = items.filter(
+                        Q(store_info__store=store) | Q(store_info__isnull=True)
+                    )
+                
+                # Log the query and result count for debugging
+                print(f"DEBUG: Search query '{query}' for family {family.id}, found initial count: {items.count()}")
                 
                 # Sort by family usage first, then global popularity
                 items = items.annotate(
@@ -798,6 +811,7 @@ class GroceryItemSearchView(LoginRequiredMixin, View):
                 'image_url': item.image_url or '',
             } for item in items]
             
+            print(f"Search for '{query}' found {len(items_data)} items")  # Debug output
             return JsonResponse({'items': items_data})
             
         except (Family.DoesNotExist, GroceryStore.DoesNotExist):
@@ -1206,6 +1220,120 @@ class GroceryItemDetailView(LoginRequiredMixin, DetailView):
         ).distinct()
         
         return context
+
+class GroceryItemListView(LoginRequiredMixin, ListView):
+    model = GroceryItem
+    template_name = 'groceries/items/list.html'
+    context_object_name = 'items'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        # Filter query by search term if provided
+        search_term = self.request.GET.get('search', '')
+        queryset = GroceryItem.objects.filter(
+            Q(created_by=self.request.user) | 
+            Q(families__members__user=self.request.user)
+        )
+        
+        if search_term:
+            queryset = queryset.filter(
+                Q(name__icontains=search_term) |
+                Q(brand__icontains=search_term) |
+                Q(category__name__icontains=search_term)
+            )
+            
+        return queryset.distinct().order_by('name')
+        
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_term'] = self.request.GET.get('search', '')
+        context['categories'] = ProductCategory.objects.all().order_by('name')
+        
+        # Get stores the user has access to
+        user_families = Family.objects.filter(members__user=self.request.user)
+        context['stores'] = GroceryStore.objects.filter(
+            families__in=user_families
+        ).distinct()
+        
+        return context
+
+class ItemStoreLocationView(LoginRequiredMixin, UpdateView):
+    """View for managing an item's store locations"""
+    model = GroceryItem
+    template_name = 'groceries/items/store_locations.html'
+    context_object_name = 'item'
+    fields = []  # No fields to update on the item itself
+    
+    def get_queryset(self):
+        # Users can only manage items they created or items used by their families
+        return GroceryItem.objects.filter(
+            Q(created_by=self.request.user) | 
+            Q(families__members__user=self.request.user)
+        ).distinct()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get stores the user has access to
+        user_families = Family.objects.filter(members__user=self.request.user)
+        stores = GroceryStore.objects.filter(
+            families__in=user_families
+        ).distinct()
+        
+        # Get store info for this item
+        store_info = {}
+        for store in stores:
+            # Get or initialize store info for this item
+            info, created = ItemStoreInfo.objects.get_or_create(
+                item=self.object,
+                store=store
+            )
+            
+            # Get store locations
+            locations = StoreLocation.objects.filter(store=store).order_by('sort_order', 'name')
+            
+            store_info[store] = {
+                'info': info,
+                'locations': locations
+            }
+        
+        context['store_info'] = store_info
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        
+        # Get form data
+        store_id = request.POST.get('store_id')
+        location_id = request.POST.get('location_id', '')
+        
+        try:
+            # Get the store
+            store = GroceryStore.objects.get(id=store_id)
+            
+            # Get or create store info
+            store_info, created = ItemStoreInfo.objects.get_or_create(
+                item=self.object,
+                store=store
+            )
+            
+            # Set location (or None to remove it)
+            if location_id:
+                location = StoreLocation.objects.get(id=location_id, store=store)
+                store_info.location = location
+            else:
+                store_info.location = None
+                
+            store_info.save()
+            
+            messages.success(request, f"Updated location for {self.object.name} in {store.name}")
+        except (GroceryStore.DoesNotExist, StoreLocation.DoesNotExist):
+            messages.error(request, "Invalid store or location selected")
+            
+        return redirect('groceries:item_store_locations', pk=self.object.pk)
+    
+    def get_success_url(self):
+        return reverse('groceries:item_store_locations', kwargs={'pk': self.object.pk})
 
 class GroceryItemUpdateView(LoginRequiredMixin, UpdateView):
     model = GroceryItem

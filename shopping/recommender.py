@@ -120,7 +120,10 @@ class ShoppingRecommender:
         from .models import GroceryItem, FamilyItemUsage
         
         try:
-            if not shopping_list.items.exists():
+            # Check if the shopping list has any items
+            item_count = shopping_list.items.count()
+            
+            if item_count == 0:
                 # If list is empty, fall back to family recommendations
                 return cls.get_recommendations_for_family(
                     shopping_list.family, 
@@ -351,11 +354,11 @@ class ShoppingRecommender:
         
         # Get items that frequently appear in these lists
         co_purchased = GroceryItem.objects.filter(
-            shopping_list_items__shopping_list__in=lists_with_items
+            shoppinglistitem__shopping_list__in=lists_with_items
         ).exclude(
             id__in=item_ids
         ).annotate(
-            purchase_count=Count('shopping_list_items')
+            purchase_count=Count('shoppinglistitem')
         ).order_by('-purchase_count')
         
         # Filter by store if specified

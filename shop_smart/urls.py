@@ -10,6 +10,10 @@ urlpatterns = [
     path('', views.LandingPageView.as_view(), name='landing'),
     path('app/', include('shopping.urls')),
     
+    # API endpoints that need to be at the root level
+    path('api/items/search/', views.GroceryItemSearchView.as_view(), name='item_search'),
+    path('api/items/barcode/<str:barcode>/', views.BarcodeSearchView.as_view(), name='barcode_search'),
+    
     # Authentication URLs
     path('login/', auth_views.LoginView.as_view(template_name='groceries/auth/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),

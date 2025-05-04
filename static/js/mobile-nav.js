@@ -326,6 +326,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup custom checkboxes
     const checkboxes = document.querySelectorAll('.custom-checkbox');
     
+    // Get list ID from the shopping list container
+    const shoppingListContainer = document.getElementById('shopping-list');
+    const defaultListId = shoppingListContainer ? shoppingListContainer.dataset.listId : null;
+    
+    console.log('Shopping list container found:', shoppingListContainer ? 'Yes' : 'No', 'List ID:', defaultListId);
+    
     checkboxes.forEach(checkbox => {
       checkbox.addEventListener('click', () => {
         const listItem = checkbox.closest('.list-item');
@@ -338,10 +344,17 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // Get the item data
           const itemId = listItem.dataset.itemId;
-          const listId = document.querySelector('.shopping-list').dataset.listId;
+          // Try to get list ID from multiple sources for redundancy
+          const listId = checkbox.dataset.listId || defaultListId;
           
-          // Update on server
-          updateItemStatus(listId, itemId, checkbox.classList.contains('checked'));
+          console.log('Toggle item:', itemId, 'in list:', listId);
+          
+          // Update on server if we have both IDs
+          if (itemId && listId) {
+            updateItemStatus(listId, itemId, checkbox.classList.contains('checked'));
+          } else {
+            console.error('Missing IDs for item toggle:', 'Item ID:', itemId, 'List ID:', listId);
+          }
         }
       });
     });
@@ -356,11 +369,78 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (listItem) {
           const itemId = listItem.dataset.itemId;
-          const listId = document.querySelector('.shopping-list').dataset.listId;
+          const listId = button.dataset.listId;
           
-          // Open price modal
-          openPriceModal(listId, itemId);
+          // Open price modal if we have both IDs
+          if (itemId && listId) {
+            openPriceModal(listId, itemId);
+          }
         }
       });
     });
+  }
+  
+  // Function to update item status on the server
+  function updateItemStatus(listId, itemId, isChecked) {
+    // Get CSRF token from cookies
+    const csrfToken = getCsrfToken();
+    
+    // Send request to server
+    fetch(`/app/lists/${listId}/items/${itemId}/toggle/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Error updating item status: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Item status updated:', data);
+      // Update progress bar if it exists
+      if (typeof updateProgress === 'function') {
+        updateProgress();
+      }
+    })
+    .catch(error => {
+      console.error('Error updating item:', error);
+      // Revert the UI state if there was an error
+      const checkbox = document.querySelector(`.custom-checkbox[data-item-id="${itemId}"][data-list-id="${listId}"]`);
+      if (checkbox) {
+        checkbox.classList.toggle('checked');
+        const listItem = checkbox.closest('.list-item');
+        if (listItem) {
+          listItem.classList.toggle('checked');
+        }
+      }
+    });
+  }
+  
+  // Function to get CSRF token from cookies
+  function getCsrfToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    
+    return cookieValue;
+  }
+  
+  // Function to open price modal (stub - implement as needed)
+  function openPriceModal(listId, itemId) {
+    console.log('Opening price modal for item', itemId, 'in list', listId);
+    // Implementation will depend on your modal system
   }
