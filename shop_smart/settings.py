@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from django.contrib.messages import constants as messages
 from dotenv import load_dotenv
@@ -9,13 +10,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from .env file
 load_dotenv(BASE_DIR / '.env')
 
+# Environment variable validation
+def get_env_variable(var_name, default=None, required=False):
+    """Get environment variable or return exception if required and not set."""
+    value = os.environ.get(var_name, default)
+    if required and not value:
+        error_msg = f"Required environment variable '{var_name}' is not set"
+        print(error_msg, file=sys.stderr)
+        raise Exception(error_msg)
+    return value
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-development-key-change-in-production')
+SECRET_KEY = get_env_variable('SECRET_KEY', 'django-insecure-development-key-change-in-production', 
+                             required=not get_env_variable('DEBUG', 'False') == 'True')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = get_env_variable('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -68,13 +80,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'shop_smart.wsgi.application'
 DATABASES = {
     'default': {
-        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.environ.get('DB_NAME', 'shopsmart'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-        'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '600')),
+        'ENGINE': get_env_variable('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': get_env_variable('DB_NAME', 'shopsmart', required=not DEBUG),
+        'USER': get_env_variable('DB_USER', 'postgres', required=not DEBUG),
+        'PASSWORD': get_env_variable('DB_PASSWORD', 'postgres', required=not DEBUG),
+        'HOST': get_env_variable('DB_HOST', 'localhost'),
+        'PORT': get_env_variable('DB_PORT', '5432'),
+        'CONN_MAX_AGE': int(get_env_variable('DB_CONN_MAX_AGE', '600')),
     }
 }
 
@@ -211,25 +223,28 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
 SESSION_SAVE_EVERY_REQUEST = True
 
 # Email settings
-EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_BACKEND = get_env_variable('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = get_env_variable('EMAIL_HOST', '')
+EMAIL_PORT = int(get_env_variable('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = get_env_variable('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD', '', required=not DEBUG and EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend')
 
 # PWA settings
-PWA_APP_NAME = os.environ.get('PWA_APP_NAME', 'ShopSmart')
-PWA_APP_SHORT_NAME = os.environ.get('PWA_APP_SHORT_NAME', 'ShopSmart')
-PWA_APP_DESCRIPTION = os.environ.get('PWA_APP_DESCRIPTION', 'Your personal grocery shopping assistant')
-PWA_APP_THEME_COLOR = os.environ.get('PWA_APP_THEME_COLOR', '#4CAF50')
-PWA_APP_BACKGROUND_COLOR = os.environ.get('PWA_APP_BACKGROUND_COLOR', '#FFFFFF')
-PWA_APP_DISPLAY = os.environ.get('PWA_APP_DISPLAY', 'standalone')
-PWA_APP_SCOPE = os.environ.get('PWA_APP_SCOPE', '/')
-PWA_APP_START_URL = os.environ.get('PWA_APP_START_URL', '/')
+PWA_APP_NAME = get_env_variable('PWA_APP_NAME', 'ShopSmart')
+PWA_APP_SHORT_NAME = get_env_variable('PWA_APP_SHORT_NAME', 'ShopSmart')
+PWA_APP_DESCRIPTION = get_env_variable('PWA_APP_DESCRIPTION', 'Your personal grocery shopping assistant')
+PWA_APP_THEME_COLOR = get_env_variable('PWA_APP_THEME_COLOR', '#4CAF50')
+PWA_APP_BACKGROUND_COLOR = get_env_variable('PWA_APP_BACKGROUND_COLOR', '#FFFFFF')
+PWA_APP_DISPLAY = get_env_variable('PWA_APP_DISPLAY', 'standalone')
+PWA_APP_SCOPE = get_env_variable('PWA_APP_SCOPE', '/')
+PWA_APP_START_URL = get_env_variable('PWA_APP_START_URL', '/')
 
 # API Settings
-OPENFOODFACTS_USER_AGENT = os.environ.get('OPENFOODFACTS_USER_AGENT', 'ShopSmart - Django Shopping App')
+OPENFOODFACTS_USER_AGENT = get_env_variable('OPENFOODFACTS_USER_AGENT', 'ShopSmart - Django Shopping App')
+
+# Cloudflare settings
+CLOUDFLARE_TUNNEL_TOKEN = get_env_variable('CLOUDFLARE_TUNNEL_TOKEN', '', required=not DEBUG)
 
 # Security settings
 if not DEBUG:

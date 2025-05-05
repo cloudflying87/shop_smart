@@ -19,7 +19,11 @@ _gsdata_
 # Backup files # 
 *.bak 
 
+# Environment variables - never commit these
+.env
 .env.prod
+.env.*
+*.env
 
 # AWS User-specific
 .idea/**/aws.xml
