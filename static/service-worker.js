@@ -21,10 +21,16 @@ const STATIC_ASSETS = [
   '/static/js/mobile-nav.js',
   '/static/js/service-worker-register.js',
   '/static/manifest.json',
+  '/static/icons/logo.svg',
   '/static/icons/favicon.ico',
+  '/static/icons/icon-72x72.png',
+  '/static/icons/icon-96x96.png',
+  '/static/icons/icon-128x128.png',
+  '/static/icons/icon-144x144.png',
+  '/static/icons/icon-152x152.png',
   '/static/icons/icon-192x192.png',
-  '/static/icons/icon-512x512.png',
-  '/static/icons/logo.svg'
+  '/static/icons/icon-384x384.png',
+  '/static/icons/icon-512x512.png'
 ];
 
 // Maximum number of items in dynamic cache
@@ -323,8 +329,7 @@ self.addEventListener('push', event => {
   
   const options = {
     body: data.body,
-    icon: '/static/icons/icon-192x192.png',
-    badge: '/static/icons/badge-72x72.png',
+    icon: '/static/icons/icon-144x144.png',
     vibrate: [100, 50, 100],
     data: {
       url: data.url

@@ -63,14 +63,14 @@
       "short_name": "New List",
       "description": "Create a new shopping list",
       "url": "/app/lists/create/",
-      "icons": [{ "src": "icons/icon-192x192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "icons/icon-144x144.png", "sizes": "144x144" }]
     },
     {
       "name": "My Lists",
       "short_name": "Lists",
       "description": "View your shopping lists",
       "url": "/app/lists/",
-      "icons": [{ "src": "icons/icon-192x192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "icons/icon-144x144.png", "sizes": "144x144" }]
     }
   ],
   "screenshots": [
