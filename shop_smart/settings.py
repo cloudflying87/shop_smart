@@ -258,6 +258,14 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
 
+# CSRF trusted origins (needed for Cloudflare deployment)
+CSRF_TRUSTED_ORIGINS = []
+for host in ALLOWED_HOSTS:
+    if host.startswith('http'):
+        CSRF_TRUSTED_ORIGINS.append(host)
+    else:
+        CSRF_TRUSTED_ORIGINS.append(f'https://{host}')
+
 # Authentication URLs
 LOGIN_REDIRECT_URL = '/app/'
 LOGOUT_REDIRECT_URL = '/'
