@@ -84,7 +84,7 @@ DATABASES = {
         'NAME': get_env_variable('DB_NAME', 'shopsmart', required=not DEBUG),
         'USER': get_env_variable('DB_USER', 'postgres', required=not DEBUG),
         'PASSWORD': get_env_variable('DB_PASSWORD', 'postgres', required=not DEBUG),
-        'HOST': get_env_variable('DB_HOST', 'localhost'),
+        'HOST': get_env_variable('DB_HOST', 'db'),  # Use 'db' for Docker, 'localhost' for local dev
         'PORT': get_env_variable('DB_PORT', '5432'),
         'CONN_MAX_AGE': int(get_env_variable('DB_CONN_MAX_AGE', '600')),
     }
