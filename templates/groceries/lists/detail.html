@@ -110,24 +110,13 @@
     <div class="search-container card mb-4">
         <div class="card-body">
             <form id="item-search-form" class="item-search-form">
-                <div class="input-group">
-                    <input type="text" id="item-search" class="form-control" placeholder="Search for items to add...">
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="submit">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
-                                <path fill="none" d="M0 0h24v24H0z"/>
-                                <path d="M18.031 16.617l4.283 4.282-1.415 1.415-4.282-4.283A8.96 8.96 0 0 1 11 20c-4.968 0-9-4.032-9-9s4.032-9 9-9 9 4.032 9 9a8.96 8.96 0 0 1-1.969 5.617zm-2.006-.742A6.977 6.977 0 0 0 18 11c0-3.868-3.133-7-7-7-3.868 0-7 3.132-7 7 0 3.867 3.132 7 7 7a6.977 6.977 0 0 0 4.875-1.975l.15-.15z" fill="currentColor"/>
-                            </svg>
-                        </button>
-                    </div>
+                <div class="form-group">
+                    <label for="item-select">Search and add items:</label>
+                    <select id="item-select" class="form-control" style="width: 100%;">
+                        <option></option>
+                    </select>
                 </div>
             </form>
-            
-            <!-- Search Results Container -->
-            <div id="search-results" class="search-results mt-3" style="display: none; position: relative; z-index: 100;">
-                <h3 class="results-title mb-2">Results</h3>
-                <div id="results-container" class="results-container border rounded p-2" style="background: white;"></div>
-            </div>
         </div>
     </div>
     
@@ -370,7 +359,72 @@
 {% endblock %}
 
 {% block extra_css %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
+    /* Select2 custom styles */
+    .select2-container {
+        width: 100% !important;
+    }
+    
+    .select2-container--default .select2-selection--single {
+        height: 45px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: normal;
+        padding-left: 0;
+        color: #333;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 43px;
+        right: 8px;
+    }
+    
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #4CAF50;
+    }
+    
+    .select2-dropdown {
+        border-color: #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .select2-search--dropdown .select2-search__field {
+        padding: 8px;
+        border-radius: 4px;
+    }
+    
+    .select2-results__option {
+        padding: 10px 12px;
+    }
+    
+    .select2-result-item {
+        padding: 4px 0;
+    }
+    
+    .select2-result-item__name {
+        font-weight: 500;
+    }
+    
+    .select2-result-item__brand {
+        font-size: 0.8rem;
+        color: #777;
+        margin-top: 2px;
+    }
+    
+    .select2-no-results-action {
+        padding: 15px !important;
+        border-top: 1px solid #eee;
+    }
+    
     .list-meta {
         display: flex;
         flex-wrap: wrap;
@@ -630,10 +684,79 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- jQuery is required for Select2 -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    $(document).ready(function() {
         // Note: Checkbox toggling is now handled by mobile-nav.js
         // We'll just define the updateProgress function here
+
+        // Initialize Select2 for item search
+        $('#item-select').select2({
+            placeholder: 'Search for items to add...',
+            allowClear: true,
+            minimumInputLength: 2,
+            ajax: {
+                url: `/api/items/search/`,
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        query: params.term,
+                        family: {{ list.family.id }},
+                        store: {{ list.store.id }}
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.items.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: item.name,
+                                brand: item.brand || ''
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            templateResult: formatItem,
+            templateSelection: formatItemSelection
+        });
+        
+        // Format the items in dropdown
+        function formatItem(item) {
+            if (!item.id) {
+                return item.text;
+            }
+            
+            var $container = $(
+                '<div class="select2-result-item">' +
+                    '<div class="select2-result-item__name">' + item.text + '</div>' +
+                    (item.brand ? '<div class="select2-result-item__brand">' + item.brand + '</div>' : '') +
+                '</div>'
+            );
+            
+            return $container;
+        }
+        
+        // Format the selected item
+        function formatItemSelection(item) {
+            return item.text;
+        }
+        
+        // Handle item selection
+        $('#item-select').on('select2:select', function(e) {
+            var data = e.params.data;
+            openAddItemModal(data.id, data.text);
+            
+            // Clear selection after opening modal
+            setTimeout(function() {
+                $('#item-select').val(null).trigger('change');
+            }, 100);
+        });
         
         // Price update modal
         const priceModal = document.getElementById('price-modal');
@@ -723,91 +846,33 @@
             });
         });
         
-        // Item search
-        const searchForm = document.getElementById('item-search-form');
-        const searchInput = document.getElementById('item-search');
-        const searchResults = document.getElementById('search-results');
-        const resultsContainer = document.getElementById('results-container');
-        
-        searchForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const query = searchInput.value.trim();
-            
-            if (!query) {
-                searchResults.style.display = 'none';
-                return;
-            }
-            
-            // Show loading state
-            resultsContainer.innerHTML = '<div class="text-center p-3"><div class="spinner"></div><p>Searching...</p></div>';
-            searchResults.style.display = 'block';
-            
-            // Send search request
-            fetch(`/api/items/search/?family={{ list.family.id }}&store={{ list.store.id }}&query=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Search results:", data); // Debug output
-                    if (data.items && data.items.length > 0) {
-                        // Display results
-                        resultsContainer.innerHTML = '';
-                        
-                        data.items.forEach(item => {
-                            const resultItem = document.createElement('div');
-                            resultItem.className = 'search-result-item';
-                            resultItem.dataset.itemId = item.id;
-                            resultItem.dataset.itemName = item.name;
-                            
-                            resultItem.innerHTML = `
-                                <div class="result-content">
-                                    <div class="result-name">${item.name}</div>
-                                    ${item.brand ? `<div class="result-brand">${item.brand}</div>` : ''}
-                                </div>
-                                <button class="btn btn-sm btn-outline add-btn">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-                                        <path fill="none" d="M0 0h24v24H0z"/>
-                                        <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
-                                    </svg>
-                                    Add
-                                </button>
-                            `;
-                            
-                            resultsContainer.appendChild(resultItem);
-                            
-                            // Add click handler
-                            resultItem.addEventListener('click', function() {
-                                openAddItemModal(this.dataset.itemId, this.dataset.itemName);
-                            });
-                        });
-                    } else {
-                        // No results
-                        resultsContainer.innerHTML = `
-                            <div class="text-center p-3">
-                                <p>No items found matching "${query}"</p>
-                                <a href="/app/items/create/?list={{ list.id }}&family={{ list.family.id }}" class="btn btn-sm btn-primary mt-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="mr-1">
-                                        <path fill="none" d="M0 0h24v24H0z"/>
-                                        <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
-                                    </svg>
-                                    Create New Item
-                                </a>
-                            </div>
-                        `;
-                        
-                        // We no longer need this click handler since we're using a direct link
-                        // The href attribute of the anchor tag handles navigation
-                    }
-                })
-                .catch(error => {
-                    console.error('Error searching items:', error);
-                    resultsContainer.innerHTML = '<div class="text-center p-3"><p>Error searching items. Please try again.</p></div>';
+        // Select2 handles the search functionality now
+        // We'll add a "No results" template
+        $('#item-select').on('select2:open', function() {
+            // Create a link to add a new item if no results found
+            if (!document.querySelector('.select2-no-results-action')) {
+                $('.select2-dropdown').append(
+                    `<div class="select2-no-results-action" style="display:none; padding: 10px; text-align: center; border-top: 1px solid #ddd;">
+                        <a href="/app/items/create/?list={{ list.id }}&family={{ list.family.id }}" class="btn btn-sm btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" style="margin-right: 5px; vertical-align: text-bottom;">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                            </svg>
+                            Create New Item
+                        </a>
+                    </div>`
+                );
+                
+                // Show the action link when no results found
+                $(document).on('keyup', '.select2-search__field', function() {
+                    setTimeout(function() {
+                        if ($('.select2-results__message').length > 0) {
+                            $('.select2-no-results-action').show();
+                        } else {
+                            $('.select2-no-results-action').hide();
+                        }
+                    }, 300);
                 });
-        });
-        
-        // Clear search when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!searchForm.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
             }
         });
         
@@ -818,17 +883,16 @@
         
         // Function to open add item modal
         function openAddItemModal(itemId, itemName) {
-            document.getElementById('add-item-id').value = itemId;
-            document.getElementById('add-item-modal-title').textContent = `Add: ${itemName}`;
+            $('#add-item-id').val(itemId);
+            $('#add-item-modal-title').text(`Add: ${itemName}`);
             
             // Reset form
-            document.getElementById('add-quantity').value = '1';
-            document.getElementById('add-unit').value = '';
-            document.getElementById('add-note').value = '';
+            $('#add-quantity').val('1');
+            $('#add-unit').val('');
+            $('#add-note').val('');
             
             // Show modal
-            addItemModal.classList.add('active');
-            searchResults.style.display = 'none';
+            $(addItemModal).addClass('active');
         }
         
         // Handle recommended items
@@ -1034,6 +1098,15 @@
                 const progressText = document.querySelector('.list-progress span:last-child');
                 progressText.textContent = `${checkedItems}/${totalItems} items (${percentage}%)`;
             }
+        }
+        
+        // Ensure other parts of the page work with jQuery
+        function getCSRFToken() {
+            const cookieValue = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('csrftoken='))
+                ?.split('=')[1];
+            return cookieValue;
         }
     });
 </script>

@@ -10,16 +10,13 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="search-form">
-                <div class="input-group">
-                    <input type="text" name="search" class="form-control" placeholder="Search products..." value="{{ search_term }}">
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="submit">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
-                                <path fill="none" d="M0 0h24v24H0z"/>
-                                <path d="M18.031 16.617l4.283 4.282-1.415 1.415-4.282-4.283A8.96 8.96 0 0 1 11 20c-4.968 0-9-4.032-9-9s4.032-9 9-9 9 4.032 9 9a8.96 8.96 0 0 1-1.969 5.617zm-2.006-.742A6.977 6.977 0 0 0 18 11c0-3.868-3.133-7-7-7-3.868 0-7 3.132-7 7 0 3.867 3.132 7 7 7a6.977 6.977 0 0 0 4.875-1.975l.15-.15z" fill="currentColor"/>
-                            </svg>
-                        </button>
-                    </div>
+                <div class="form-group">
+                    <label for="product-search">Search Products:</label>
+                    <select id="product-search" name="search" class="form-control" style="width: 100%;">
+                        {% if search_term %}
+                        <option value="{{ search_term }}" selected>{{ search_term }}</option>
+                        {% endif %}
+                    </select>
                 </div>
             </form>
         </div>
@@ -156,19 +153,65 @@
 {% endblock %}
 
 {% block extra_css %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
+    /* Select2 custom styles */
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+        height: 45px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: normal;
+        padding-left: 0;
+        color: #333;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 43px;
+        right: 8px;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #4CAF50;
+    }
+
+    .select2-dropdown {
+        border-color: #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .select2-search--dropdown .select2-search__field {
+        padding: 8px;
+        border-radius: 4px;
+    }
+
+    .select2-results__option {
+        padding: 10px 12px;
+    }
+
     .item-info {
         flex: 1;
     }
-    
+
     .list-group-item {
         transition: background-color 0.2s;
     }
-    
+
     .list-group-item:hover {
         background-color: var(--bg-secondary);
     }
-    
+
     .search-form {
         width: 100%;
     }
@@ -225,4 +268,71 @@
         background-color: var(--color-danger-muted);
     }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery is required for Select2 -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for product search
+        $('#product-search').select2({
+            placeholder: 'Search products...',
+            allowClear: true,
+            minimumInputLength: 2,
+            ajax: {
+                url: '/api/items/search/',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        query: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.items.map(function(item) {
+                            return {
+                                id: item.name,  // Use the name as the value to submit
+                                text: item.name,
+                                brand: item.brand || ''
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            templateResult: formatItem,
+            templateSelection: formatItemSelection
+        });
+
+        // Format the items in dropdown
+        function formatItem(item) {
+            if (!item.id) {
+                return item.text;
+            }
+
+            var $container = $(
+                '<div class="select2-result-item">' +
+                    '<div class="select2-result-item__name">' + item.text + '</div>' +
+                    (item.brand ? '<div class="select2-result-item__brand">' + item.brand + '</div>' : '') +
+                '</div>'
+            );
+
+            return $container;
+        }
+
+        // Format the selected item
+        function formatItemSelection(item) {
+            return item.text;
+        }
+
+        // Submit form when an item is selected
+        $('#product-search').on('select2:select', function(e) {
+            $(this).closest('form').submit();
+        });
+    });
+</script>
 {% endblock %}

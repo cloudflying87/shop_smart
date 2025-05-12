@@ -58,25 +58,34 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Auto-populate list name with current date if the field is empty
+        const nameInput = document.getElementById('id_name');
+        if (!nameInput.value) {
+            const now = new Date();
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            const formattedDate = now.toLocaleDateString('en-US', options);
+            nameInput.value = `Shopping List - ${formattedDate}`;
+        }
+
         // Show template list selector only when a family is selected
         const familySelect = document.getElementById('id_family');
         const templateListGroup = document.querySelector('[id$="template_list"]').closest('.form-group');
-        
+
         function updateTemplateListVisibility() {
             if (familySelect.value) {
                 templateListGroup.style.display = 'block';
-                
+
                 // Filter template list to show only lists from the selected family
                 const templateList = document.getElementById('id_template_list');
                 const selectedFamily = familySelect.value;
-                
+
                 Array.from(templateList.options).forEach(option => {
                     if (option.value === '') return; // Skip empty option
-                    
+
                     // Get family ID from the option text (assuming format: "List Name - Store (Family)")
                     const familyMatch = option.text.match(/\((.+?)\)$/);
                     const family = familyMatch ? familyMatch[1] : '';
-                    
+
                     // Hide options for other families
                     if (family !== selectedFamily) {
                         option.style.display = 'none';
@@ -88,12 +97,24 @@
                 templateListGroup.style.display = 'none';
             }
         }
-        
+
         // Initial visibility
         updateTemplateListVisibility();
-        
+
         // Update on family change
         familySelect.addEventListener('change', updateTemplateListVisibility);
+
+        // Update list name with store name when store is selected
+        const storeSelect = document.getElementById('id_store');
+        storeSelect.addEventListener('change', function() {
+            const storeName = storeSelect.options[storeSelect.selectedIndex].text;
+            if (storeName && storeName !== '---------') {
+                const now = new Date();
+                const options = { weekday: 'long', month: 'short', day: 'numeric' };
+                const formattedDate = now.toLocaleDateString('en-US', options);
+                nameInput.value = `${storeName} - ${formattedDate}`;
+            }
+        });
     });
 </script>
 {% endblock %}
