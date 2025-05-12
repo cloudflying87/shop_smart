@@ -258,6 +258,11 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
 
+    # Cloudflare proxy settings
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
+
 # CSRF trusted origins (needed for Cloudflare deployment)
 CSRF_TRUSTED_ORIGINS = []
 for host in ALLOWED_HOSTS:
