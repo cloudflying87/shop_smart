@@ -12,16 +12,19 @@ from django.views.generic.base import TemplateView
 from django.utils import timezone
 
 from .models import (
-    Family, FamilyMember, UserProfile, GroceryStore, GroceryItem, 
+    Family, FamilyMember, UserProfile, GroceryStore, GroceryItem,
     ShoppingList, ShoppingListItem, StoreLocation,
     FamilyItemUsage, ProductCategory, ItemStoreInfo
 )
 from .forms import (
     ShoppingListForm, FamilyForm, GroceryStoreForm, GroceryItemForm,
-    StoreLocationForm, ShoppingListItemForm, UserProfileForm, FamilyMemberForm, 
+    StoreLocationForm, ShoppingListItemForm, UserProfileForm, FamilyMemberForm,
     UserRegistrationForm
 )
 from .recommender import ShoppingRecommender
+
+# Import category-based item selection views
+from .views_category import CategoryItemSelectionView, AddMultipleItemsView
 
 # Store Location Views
 class AddStoreLocationView(LoginRequiredMixin, CreateView):

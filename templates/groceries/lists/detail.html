@@ -109,9 +109,18 @@
     <!-- Add Item Search Box -->
     <div class="search-container card mb-4">
         <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <label for="item-select">Search and add items:</label>
+                <a href="{% url 'groceries:category_selection' list_id=list.id %}" class="btn btn-sm btn-outline-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-1">
+                        <path fill="none" d="M0 0h24v24H0z"/>
+                        <path d="M3 4h18v2H3V4zm0 7h12v2H3v-2zm0 7h18v2H3v-2z" fill="currentColor"/>
+                    </svg>
+                    Browse by Category
+                </a>
+            </div>
             <form id="item-search-form" class="item-search-form">
                 <div class="form-group">
-                    <label for="item-select">Search and add items:</label>
                     <select id="item-select" class="form-control" style="width: 100%;">
                         <option></option>
                     </select>

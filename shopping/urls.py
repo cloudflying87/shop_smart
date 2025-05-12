@@ -22,6 +22,8 @@ urlpatterns = [
     
     # List Items
     path('lists/<int:list_id>/items/add/', views.AddListItemView.as_view(), name='add_list_item'),
+    path('lists/<int:list_id>/items/categories/', views.CategoryItemSelectionView.as_view(), name='category_selection'),
+    path('lists/<int:list_id>/items/add-multiple/', views.AddMultipleItemsView.as_view(), name='add_multiple_items'),
     path('lists/<int:list_id>/items/<int:item_id>/toggle/', views.ToggleListItemView.as_view(), name='toggle_list_item'),
     path('lists/<int:list_id>/items/<int:item_id>/price/', views.UpdateListItemPriceView.as_view(), name='update_item_price'),
     path('lists/<int:list_id>/items/<int:item_id>/remove/', views.RemoveListItemView.as_view(), name='remove_list_item'),
