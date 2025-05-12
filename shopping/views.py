@@ -22,6 +22,7 @@ from .forms import (
     UserRegistrationForm
 )
 from .recommender import ShoppingRecommender
+from .store_utils import create_default_store_locations
 
 # Import category-based item selection views
 from .views_category import CategoryItemSelectionView, AddMultipleItemsView
@@ -672,29 +673,36 @@ class StoreCreateView(LoginRequiredMixin, CreateView):
     model = GroceryStore
     form_class = GroceryStoreForm
     template_name = 'groceries/stores/create.html'
-    
+
     def form_valid(self, form):
         response = super().form_valid(form)
-        
+
         # Add this store to the user's families
         family_ids = self.request.POST.getlist('families[]')
-        
+
         # If we didn't get any values with families[], try the standard name
         if not family_ids:
             family_ids = self.request.POST.getlist('families')
-            
+
         # Convert string IDs to integers
         family_ids = [int(id) for id in family_ids if id.isdigit()]
-        
+
         families = Family.objects.filter(
             id__in=family_ids,
             members__user=self.request.user
         )
-        
+
         if families:
             self.object.families.add(*families)
-            
-        messages.success(self.request, f'Store "{form.instance.name}" created successfully')
+
+        # Create default store locations
+        locations = create_default_store_locations(self.object)
+
+        messages.success(
+            self.request,
+            f'Store "{form.instance.name}" created successfully with {len(locations)} default store locations. '
+            f'You can customize them in the store details page.'
+        )
         return response
     
     def get_success_url(self):
