@@ -4,7 +4,7 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.db.models import F, Count, Q
+from django.db.models import F, Count, Q, Subquery, OuterRef
 from django.db import IntegrityError
 from django.utils.text import slugify
 from django.views.generic import (
@@ -304,53 +304,26 @@ class ShoppingListDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         shopping_list = self.object
 
-        # Get list items organized by store location and checked status
+        # Get list items organized with store location ordering
         list_items = shopping_list.items.select_related(
             'item', 'item__category'
+        ).annotate(
+            # Get location sort order only for the current store
+            location_sort=Subquery(
+                ItemStoreInfo.objects.filter(
+                    item=OuterRef('item_id'),
+                    store=shopping_list.store
+                ).values('location__sort_order')[:1]
+            )
         ).order_by(
             'checked',
-            F('item__store_info__location__sort_order').asc(nulls_last=True),
+            'location_sort',
             'sort_order',
             'item__name'
-        )
+        ).distinct()
 
-        # Get user preference for showing categories
-        show_categories = True  # Default if not logged in or no profile
-        if self.request.user.is_authenticated:
-            try:
-                profile = self.request.user.profile
-                show_categories = profile.show_categories
-            except UserProfile.DoesNotExist:
-                pass
-
-        # Initialize context variables
-        locations = {}
-        uncategorized_items = []
-        all_items = []  # For non-categorized view
-
-        # Either organize by category or provide a flat list based on user preference
-        if show_categories:
-            # Organize items by location
-            for item in list_items:
-                # Try to get location for this item in this store
-                try:
-                    item_store_info = ItemStoreInfo.objects.get(
-                        item=item.item,
-                        store=shopping_list.store
-                    )
-                    location = item_store_info.location
-                    if location:
-                        if location not in locations:
-                            locations[location] = []
-                        locations[location].append(item)
-                    else:
-                        uncategorized_items.append(item)
-                except ItemStoreInfo.DoesNotExist:
-                    uncategorized_items.append(item)
-        else:
-            # Just pass all items as a flat list
-            all_items = list(list_items)
-
+        # Use flat list view only
+        all_items = list(list_items)    
         # Get recommendations for this list
         try:
             recommended_items = ShoppingRecommender.get_recommendations_based_on_list(
@@ -365,17 +338,13 @@ class ShoppingListDetailView(LoginRequiredMixin, DetailView):
             except NameError:
                 print(f"Error getting recommendations: {str(e)}")
 
-        # Add all variables to context
-        context['show_categories'] = show_categories
-        context['locations'] = locations
-        context['uncategorized_items'] = uncategorized_items
-        context['all_items'] = all_items  # Add the flat list for non-categorized view
+        # Add all items to context for flat list view
+        context['all_items'] = all_items
         context['recommended_items'] = recommended_items
         context['total_items'] = list_items.count()
         context['checked_items'] = list_items.filter(checked=True).count()
         context['list_items'] = list_items  # Original queryset for reference
         context['store_locations'] = StoreLocation.objects.filter(store=shopping_list.store).order_by('sort_order')
-
         return context
 
 class ShoppingListUpdateView(LoginRequiredMixin, UpdateView):
@@ -1351,33 +1320,7 @@ class RemoveFamilyMemberView(LoginRequiredMixin, View):
             messages.error(request, f'Error removing member: {str(e)}')
             return redirect('groceries:family_detail', pk=family.id)
 
-class ToggleCategoriesView(LoginRequiredMixin, View):
-    """API endpoint to toggle categories display in shopping lists"""
-    
-    def post(self, request):
-        try:
-            # Get data from request body
-            import json
-            data = json.loads(request.body)
-            show_categories = data.get('show_categories', True)
-            
-            # Get or create user profile
-            profile, created = UserProfile.objects.get_or_create(user=request.user)
-            
-            # Update show_categories preference
-            profile.show_categories = show_categories
-            profile.save(update_fields=['show_categories'])
-            
-            return JsonResponse({
-                'success': True,
-                'show_categories': show_categories
-            })
-            
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=500)
+# ToggleCategoriesView removed - using flat list only
 
 class UpdateThemeView(LoginRequiredMixin, View):
     """API endpoint to update user theme preference and default family"""

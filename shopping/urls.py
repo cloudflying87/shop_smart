@@ -74,5 +74,5 @@ urlpatterns = [
     path('profile/', views.UserProfileView.as_view(), name='profile'),
     path('profile/edit/', views.UserProfileUpdateView.as_view(), name='edit_profile'),
     path('profile/theme/', views.UpdateThemeView.as_view(), name='update_theme'),
-    path('profile/toggle-categories/', views.ToggleCategoriesView.as_view(), name='toggle_categories'),
+    # Category toggle path removed
 ]

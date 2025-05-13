@@ -24,7 +24,7 @@ function handleCheckboxClick() {
     const wasChecked = this.classList.contains('checked');
     const isNowChecked = !wasChecked;
     
-    // Sync the checked state with the same item in both views
+    // Get all instances of this checkbox and item
     const allCheckboxes = document.querySelectorAll(`.custom-checkbox[data-item-id="${itemId}"]`);
     const allListItems = document.querySelectorAll(`.list-item[data-item-id="${itemId}"]`);
     
@@ -546,7 +546,7 @@ $(document).ready(function() {
     function moveCheckedItemToBottom(listItem, isChecked) {
         const itemId = listItem.dataset.itemId;
         
-        // Find all instances of this item in both views
+        // Find all instances of this item
         const allListItems = document.querySelectorAll(`.list-item[data-item-id="${itemId}"]`);
         
         // Move each instance to the appropriate position in its container
@@ -554,18 +554,8 @@ $(document).ready(function() {
             // Get the parent list container
             let listContainer = null;
             
-            // If this item is in the flat list
-            if (item.closest('#flat-list')) {
-                listContainer = document.getElementById('flat-list');
-            } else {
-                // If this item is in a category section
-                const locationSection = item.closest('.location-section');
-                if (locationSection) {
-                    // Get the list-items container or fall back to any UL in the section
-                    listContainer = locationSection.querySelector('.list-items') || 
-                                    locationSection.querySelector('ul');
-                }
-            }
+            // Get the flat list container
+            listContainer = document.getElementById('flat-list');
             
             if (listContainer) {
                 // Apply transition effect

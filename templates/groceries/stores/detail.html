@@ -422,7 +422,7 @@
                 const locationOrder = this.getAttribute('data-location-order');
                 
                 // Set form action URL
-                editLocationForm.action = `/groceries/stores/{{ store.id }}/locations/${locationId}/edit/`;
+                editLocationForm.action = `/app/stores/{{ store.id }}/locations/${locationId}/edit/`;
                 
                 // Populate form fields
                 document.getElementById('edit-location-id').value = locationId;

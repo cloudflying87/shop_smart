@@ -10,9 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const editModeContent = document.getElementById('edit-mode-content');
     const inStoreModeContent = document.getElementById('in-store-mode-content');
     
-    // Get the category toggle button
-    const categoryToggleBtn = document.getElementById('category-toggle-btn');
-    const categoryToggleContainer = document.querySelector('.category-toggle-container');
+    // Category toggle removed - using flat view only
     
     // Find the location headers for category sections
     const locationHeaders = document.querySelectorAll('.location-header');
@@ -36,29 +34,15 @@ document.addEventListener('DOMContentLoaded', function() {
             el.style.display = 'block';
         });
         
-        // Show category toggle button
-        if (categoryToggleContainer) {
-            categoryToggleContainer.style.display = 'flex';
-        }
+        // Category toggle button removed
         
-        // Apply category or flat view based on user preference
-        const userPrefersCategorized = localStorage.getItem('showCategories') === 'true';
-        
-        if (userPrefersCategorized) {
-            showCategorizedView();
-        } else {
-            showFlatListView();
-        }
+        // Always use flat view
+        showFlatListView();
         
         // Store the current mode in localStorage
         localStorage.setItem('shoppingListMode', 'edit');
         
-        // Make sure location headers are visible if in categorized view
-        if (userPrefersCategorized) {
-            locationHeaders.forEach(header => {
-                header.style.display = 'block';
-            });
-        }
+        // Using flat view only
         
         // Reinitialize checkbox listeners after mode change
         if (typeof initializeCheckboxListeners === 'function') {
@@ -81,10 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
             el.style.display = 'none';
         });
         
-        // Hide category toggle button in in-store mode
-        if (categoryToggleContainer) {
-            categoryToggleContainer.style.display = 'none';
-        }
+        // Category toggle button removed
         
         // Always use flat list in store mode
         showFlatListView();
@@ -98,36 +79,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Function to show categorized view (with headers)
-    function showCategorizedView() {
-        // Show categorized view container and hide flat view container
-        const categorizedView = document.querySelector('.categorized-view');
-        const flatView = document.querySelector('.flat-view');
-        
-        if (categorizedView) categorizedView.style.display = 'block';
-        if (flatView) flatView.style.display = 'none';
-        
-        // Make sure headers are visible
-        locationHeaders.forEach(header => {
-            header.style.display = 'block';
-        });
-    }
+    // Categorized view removed - using flat view only
     
-    // Function to show flat list view (without headers)
+    // Function to show flat list view
     function showFlatListView() {
-        // Show flat view container and hide categorized view container
-        const categorizedView = document.querySelector('.categorized-view');
+        // Show flat view container
         const flatView = document.querySelector('.flat-view');
-        
-        if (categorizedView) categorizedView.style.display = 'none';
         if (flatView) flatView.style.display = 'block';
-        
-        // In store mode, ensure headers remain hidden
-        if (localStorage.getItem('shoppingListMode') === 'inStore') {
-            locationHeaders.forEach(header => {
-                header.style.display = 'none';
-            });
-        }
     }
     
     // Add event listeners to the buttons
@@ -156,16 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
         activateEditMode();
     }
     
-    // Store the initial setting of show_categories
-    if (categoryToggleBtn) {
-        const initialShowCategories = categoryToggleBtn.textContent.trim().includes('Flat List');
-        localStorage.setItem('showCategories', initialShowCategories.toString());
-        
-        // After localStorage is set, call the appropriate view function again
-        if (initialShowCategories && localStorage.getItem('shoppingListMode') === 'edit') {
-            showCategorizedView();
-        } else {
-            showFlatListView();
-        }
-    }
+    // Always use flat view
+    localStorage.setItem('showCategories', 'false');
+    showFlatListView();
 });
