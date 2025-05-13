@@ -27,13 +27,21 @@ COPY . /app/
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
+# Make the entrypoint script executable
+COPY docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
+
+# Create media directories
+RUN mkdir -p /app/media/store_logos
+RUN chmod -R 777 /app/media
+
 # Run as non-root user
 RUN useradd -m appuser
 RUN chown -R appuser:appuser /app
 USER appuser
 
-# Expose port 
+# Expose port
 EXPOSE 8000
 
-# Start Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "shop_smart.wsgi:application"]
+# Use entry point script
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

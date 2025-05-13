@@ -143,6 +143,7 @@ if [ "$REBUILD" = true ]; then
     sudo docker compose -f docker-compose.yml exec web python manage.py collectstatic --noinput
     sudo docker compose -f docker-compose.yml exec web python manage.py makemigrations 
     sudo docker compose -f docker-compose.yml exec web python manage.py migrate 
+    
 fi
 
 # Restore database
