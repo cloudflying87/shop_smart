@@ -384,7 +384,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateItemStatus(listId, itemId, isChecked) {
     // Get CSRF token from cookies
     const csrfToken = getCsrfToken();
-    
+
+    // Get the list item
+    const listItem = document.querySelector(`.list-item[data-item-id="${itemId}"]`);
+    if (!listItem) return;
+
     // Send request to server
     fetch(`/app/lists/${listId}/items/${itemId}/toggle/`, {
       method: 'POST',
@@ -401,6 +405,36 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .then(data => {
       console.log('Item status updated:', data);
+
+      // Move checked item to the bottom of its location section
+      if (isChecked) {
+        const locationSection = listItem.closest('.location-section');
+        if (locationSection) {
+          // The HTML template uses ul.list-items as the class for the list container
+          const listContainer = locationSection.querySelector('.card ul');
+          if (listContainer) {
+            // Add a small delay to let the checkbox animation complete
+            setTimeout(() => {
+              // Apply transition effect
+              listItem.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+              listItem.style.opacity = '0.5';
+              listItem.style.transform = 'translateX(10px)';
+
+              setTimeout(() => {
+                // Move the item to the end of its list
+                listContainer.appendChild(listItem);
+
+                // Restore visibility with animation
+                setTimeout(() => {
+                  listItem.style.opacity = '1';
+                  listItem.style.transform = 'translateX(0)';
+                }, 50);
+              }, 300);
+            }, 100);
+          }
+        }
+      }
+
       // Update progress bar if it exists
       if (typeof updateProgress === 'function') {
         updateProgress();
