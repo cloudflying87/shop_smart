@@ -134,6 +134,8 @@ if [ "$REBUILD" = true ]; then
     sudo docker rm shop_smart-nginx-1 
     sudo docker image prune -a -f 
     sudo docker volume remove shop_smart_static_volume 
+    sudo docker volume remove shop_smart_postgres_data
+    sudo docker volume remove shop_smart_media_volume
     sudo docker volume prune -f
     echo "Starting containers"
     sudo docker compose up -d 
