@@ -21,12 +21,14 @@ function handleCheckboxClick() {
     const listItem = this.closest('.list-item');
     
     // Toggle visual state immediately for better UX
-    const isNowChecked = !this.classList.contains('checked');
+    const wasChecked = this.classList.contains('checked');
+    const isNowChecked = !wasChecked;
     
     // Sync the checked state with the same item in both views
     const allCheckboxes = document.querySelectorAll(`.custom-checkbox[data-item-id="${itemId}"]`);
     const allListItems = document.querySelectorAll(`.list-item[data-item-id="${itemId}"]`);
     
+    // Update all instances of this checkbox
     allCheckboxes.forEach(cb => {
         if (isNowChecked) {
             cb.classList.add('checked');
@@ -35,6 +37,7 @@ function handleCheckboxClick() {
         }
     });
     
+    // Update all instances of the parent list item
     allListItems.forEach(li => {
         if (isNowChecked) {
             li.classList.add('checked');
@@ -53,29 +56,40 @@ function handleCheckboxClick() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Move checked item to the bottom of its section
-            if (isNowChecked) {
-                moveCheckedItemToBottom(listItem);
+            // Handle item position based on checked state
+            if (typeof moveCheckedItemToBottom === 'function') {
+                moveCheckedItemToBottom(listItem, isNowChecked);
             }
             
             // Update progress
-            updateProgress();
+            if (typeof updateProgress === 'function') {
+                updateProgress();
+            }
         } else {
             // Revert the visual state if there was an error
             allCheckboxes.forEach(cb => cb.classList.toggle('checked'));
             allListItems.forEach(li => li.classList.toggle('checked'));
-            console.error('Error toggling item:', data.error);
+            // Error toggling item
         }
     })
     .catch(error => {
         // Revert the visual state if there was an error
         allCheckboxes.forEach(cb => cb.classList.toggle('checked'));
         allListItems.forEach(li => li.classList.toggle('checked'));
-        console.error('Error:', error);
+        // Handle error
     });
 }
 
+// Global flags to prevent duplicate initializations
+let isInitialized = false;
+
 $(document).ready(function() {
+    // Prevent double initialization
+    if (isInitialized) {
+        return;
+    }
+    isInitialized = true;
+    
     // Initialize checkbox listeners when the page loads
     initializeCheckboxListeners();
     
@@ -133,23 +147,40 @@ $(document).ready(function() {
         return item.text;
     }
     
+    // Remove any existing select2:select handlers to prevent duplicates
+    $('#item-select').off('select2:select');
+    
     // Handle item selection - direct add without modal
     $('#item-select').on('select2:select', function(e) {
         var data = e.params.data;
         var itemId = data.id;
         var itemName = data.text;
         
+        // Disable the select2 immediately
+        $(this).prop('disabled', true);
+        
         // Add item directly to the list with default quantity
         addItemDirectly(itemId, itemName);
         
-        // Clear selection after adding
+        // Clear selection but keep disabled until page reload
         setTimeout(function() {
             $('#item-select').val(null).trigger('change');
         }, 100);
     });
     
+    // Map to track items being added - key is itemId
+    const pendingItems = new Map();
+    
     // Function to add an item directly to the list
     function addItemDirectly(itemId, itemName) {
+        // Prevent duplicate submissions of the same item
+        if (pendingItems.has(itemId)) {
+            return;
+        }
+        
+        // Mark this item as being processed
+        pendingItems.set(itemId, Date.now());
+        
         // Create form data with default values
         var formData = new FormData();
         formData.append('item_id', itemId);
@@ -157,6 +188,9 @@ $(document).ready(function() {
         formData.append('unit', '');
         formData.append('note', '');
         formData.append('csrfmiddlewaretoken', getCSRFToken());
+        
+        // Show immediate feedback
+        toastNotification(`Adding ${itemName}...`);
         
         // Add directly to the list
         fetch(`/app/lists/${$('#shopping-list').data('list-id')}/items/add/`, {
@@ -166,19 +200,26 @@ $(document).ready(function() {
         })
         .then(response => response.json())
         .then(data => {
+            // Remove from pending map
+            pendingItems.delete(itemId);
+            
             if (data.success) {
                 // Show success toast
                 toastNotification(`Added ${itemName} to your list`);
                 
-                // Reload to show the new item
-                window.location.reload();
+                // Add a delay before reload to ensure server transaction completes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
             } else {
-                console.error('Error adding item:', data.error);
+                // Error adding item
                 toastNotification('Error adding item', 'error');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            // Remove from pending map on error
+            pendingItems.delete(itemId);
+            // Handle error
             toastNotification('Error adding item', 'error');
         });
     }
@@ -254,11 +295,11 @@ $(document).ready(function() {
                     priceElement.textContent = `$${data.price}`;
                 }
             } else {
-                console.error('Error updating price:', data.error);
+                // Error updating price
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            // Handle error
         });
     });
     
@@ -307,8 +348,15 @@ $(document).ready(function() {
             const itemId = this.dataset.itemId;
             const itemName = this.dataset.itemName;
             
+            // Show adding state immediately
+            const originalText = this.innerHTML;
+            this.innerHTML = '<span>Adding...</span>';
+            this.disabled = true;
+            
             // Add item directly without the modal
             addItemDirectly(itemId, itemName);
+            
+            // Button stays disabled until page reload
         });
     });
     
@@ -366,12 +414,12 @@ $(document).ready(function() {
                         }, 300);
                     }, 300);
                 } else {
-                    console.error('Error removing item:', data.error);
+                    // Error removing item
                     toastNotification('Error removing item', 'error');
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
+                // Handle error
                 toastNotification('Error removing item', 'error');
             });
         });
@@ -494,14 +542,14 @@ $(document).ready(function() {
     
     // Checkbox handlers are now initialized at page load via initializeCheckboxListeners()
     
-    // Function to move checked items to the bottom
-    function moveCheckedItemToBottom(listItem) {
+    // Function to handle item positioning based on checked state
+    function moveCheckedItemToBottom(listItem, isChecked) {
         const itemId = listItem.dataset.itemId;
         
         // Find all instances of this item in both views
         const allListItems = document.querySelectorAll(`.list-item[data-item-id="${itemId}"]`);
         
-        // Move each instance to the bottom of its respective container
+        // Move each instance to the appropriate position in its container
         allListItems.forEach(item => {
             // Get the parent list container
             let listContainer = null;
@@ -513,7 +561,9 @@ $(document).ready(function() {
                 // If this item is in a category section
                 const locationSection = item.closest('.location-section');
                 if (locationSection) {
-                    listContainer = locationSection.querySelector('.list-items');
+                    // Get the list-items container or fall back to any UL in the section
+                    listContainer = locationSection.querySelector('.list-items') || 
+                                    locationSection.querySelector('ul');
                 }
             }
             
@@ -523,16 +573,28 @@ $(document).ready(function() {
                 item.style.opacity = '0.5';
                 item.style.transform = 'translateX(10px)';
                 
-                setTimeout(() => {
-                    // Move the item to the end of its list
-                    listContainer.appendChild(item);
-                    
-                    // Restore visibility with animation
+                // Keep the item visible in the DOM
+                item.style.display = 'flex';
+                
+                // Only move checked items to the end
+                if (isChecked) {
+                    setTimeout(() => {
+                        // Move the item to the end of its list
+                        listContainer.appendChild(item);
+                        
+                        // Restore visibility with animation
+                        setTimeout(() => {
+                            item.style.opacity = '1';
+                            item.style.transform = 'translateX(0)';
+                        }, 50);
+                    }, 300);
+                } else {
+                    // If being unchecked, just restore visibility without moving
                     setTimeout(() => {
                         item.style.opacity = '1';
                         item.style.transform = 'translateX(0)';
                     }, 50);
-                }, 300);
+                }
             }
         });
     }

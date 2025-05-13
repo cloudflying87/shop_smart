@@ -337,41 +337,10 @@ document.addEventListener('DOMContentLoaded', () => {
    * Setup interactions for list items
    */
   function setupListItemInteractions() {
-    // Setup custom checkboxes
-    const checkboxes = document.querySelectorAll('.custom-checkbox');
-    
+    // Price buttons and other interactions (but not checkboxes - those are handled in shopping-list.js)
     // Get list ID from the shopping list container
     const shoppingListContainer = document.getElementById('shopping-list');
     const defaultListId = shoppingListContainer ? shoppingListContainer.dataset.listId : null;
-    
-    console.log('Shopping list container found:', shoppingListContainer ? 'Yes' : 'No', 'List ID:', defaultListId);
-    
-    checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('click', () => {
-        const listItem = checkbox.closest('.list-item');
-        
-        // Toggle checked state
-        checkbox.classList.toggle('checked');
-        
-        if (listItem) {
-          listItem.classList.toggle('checked');
-          
-          // Get the item data
-          const itemId = listItem.dataset.itemId;
-          // Try to get list ID from multiple sources for redundancy
-          const listId = checkbox.dataset.listId || defaultListId;
-          
-          console.log('Toggle item:', itemId, 'in list:', listId);
-          
-          // Update on server if we have both IDs
-          if (itemId && listId) {
-            updateItemStatus(listId, itemId, checkbox.classList.contains('checked'));
-          } else {
-            console.error('Missing IDs for item toggle:', 'Item ID:', itemId, 'List ID:', listId);
-          }
-        }
-      });
-    });
     
     // Setup list item action buttons
     const priceButtons = document.querySelectorAll('.add-price-btn');
@@ -394,90 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Function to update item status on the server
-  function updateItemStatus(listId, itemId, isChecked) {
-    // Get CSRF token from cookies
-    const csrfToken = getCsrfToken();
-
-    // Get the list item
-    const listItem = document.querySelector(`.list-item[data-item-id="${itemId}"]`);
-    if (!listItem) return;
-
-    // Send request to server
-    fetch(`/app/lists/${listId}/items/${itemId}/toggle/`, {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': csrfToken,
-        'Content-Type': 'application/json'
-      }
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Error updating item status: ${response.statusText}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Item status updated:', data);
-
-      // Move checked item to the bottom of its list
-      if (isChecked) {
-        // First, try to find the flat list view container for non-categorized mode
-        let listContainer;
-        const flatList = document.getElementById('flat-list');
-
-        if (flatList) {
-          // We're in flat list view mode
-          listContainer = flatList;
-        } else {
-          // We're in categorized view mode, so find the parent location section
-          const locationSection = listItem.closest('.location-section');
-          if (locationSection) {
-            listContainer = locationSection.querySelector('.card ul');
-          }
-        }
-
-        // If we found a valid list container, move the item
-        if (listContainer) {
-          // Add a small delay to let the checkbox animation complete
-          setTimeout(() => {
-            // Apply transition effect
-            listItem.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            listItem.style.opacity = '0.5';
-            listItem.style.transform = 'translateX(10px)';
-
-            setTimeout(() => {
-              // Move the item to the end of its list
-              listContainer.appendChild(listItem);
-
-              // Restore visibility with animation
-              setTimeout(() => {
-                listItem.style.opacity = '1';
-                listItem.style.transform = 'translateX(0)';
-              }, 50);
-            }, 300);
-          }, 100);
-        }
-      }
-
-      // Update progress bar if it exists
-      if (typeof updateProgress === 'function') {
-        updateProgress();
-      }
-    })
-    .catch(error => {
-      console.error('Error updating item:', error);
-      // Revert the UI state if there was an error
-      const checkbox = document.querySelector(`.custom-checkbox[data-item-id="${itemId}"][data-list-id="${listId}"]`);
-      if (checkbox) {
-        checkbox.classList.toggle('checked');
-        const listItem = checkbox.closest('.list-item');
-        if (listItem) {
-          listItem.classList.toggle('checked');
-        }
-      }
-    });
-  }
+  // Note: Checkbox functionality is now handled in shopping-list.js
   
   // Function to get CSRF token from cookies
   function getCsrfToken() {
@@ -500,6 +386,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Function to open price modal (stub - implement as needed)
   function openPriceModal(listId, itemId) {
-    console.log('Opening price modal for item', itemId, 'in list', listId);
+    // Implementation will depend on your modal system
     // Implementation will depend on your modal system
   }

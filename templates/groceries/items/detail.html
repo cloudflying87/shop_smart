@@ -485,7 +485,7 @@
                 formData.append('note', note);
                 
                 // Send AJAX request
-                fetch(`/groceries/lists/${listId}/items/add/`, {
+                fetch(`/app/lists/${listId}/items/add/`, {
                     method: 'POST',
                     body: formData,
                     headers: {

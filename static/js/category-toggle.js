@@ -132,9 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set initial view on page load
     setActiveView();
     
-    // Debug log for data validation
-    console.log("Categorized view has items:", categorizedView && categorizedView.querySelectorAll('.list-item').length > 0);
-    console.log("Flat view has items:", flatView && flatView.querySelectorAll('.list-item').length > 0);
+    // Ensure both views have their items loaded properly
     
     // Helper function to get CSRF token
     function getCSRFToken() {

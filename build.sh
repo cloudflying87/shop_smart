@@ -6,6 +6,8 @@ BACKUP_data=false
 REBUILD=false
 RESTORE=false
 ALL=false
+REMOTE_SERVER="davidhale87@172.16.205.4"
+REMOTE_BACKUP_DIR="/halefiles/Coding/ShopSmartBackups"
 
 # Function to display help
 show_help() {
@@ -97,7 +99,7 @@ if [ "$BACKUP_data" = true ]; then
     echo "Taking data only SQL up database with data only: $USER_DATE"
     sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -a -O -T django_migrations -f /media/shop_smartbackup_${USER_DATE}_data.sql 
     sudo docker cp shop_smart-db-1:/media/shop_smartbackup_${USER_DATE}_data.sql /media/ 
-    scp /media/shop_smartbackup_${USER_DATE}_data.sql davidhale87@172.16.205.4:/halefiles/Coding/LogbookDBBackups 
+    scp /media/shop_smartbackup_${USER_DATE}_data.sql $REMOTE_SERVER:$REMOTE_BACKUP_DIR/
 fi
 
 # Copy backup files from container to host
@@ -113,8 +115,8 @@ if [ "$BACKUP_all" = true ]; then
     sudo docker cp shop_smart-db-1:/media/shop_smartbackup_${USER_DATE}_clean.sql /media/ 
     echo "Transferring backup files to remote server"
     scp /media/shop_smartbackup_${USER_DATE}_data.sql davidhale87@172.16.205.4:/halefiles/Coding/LogbookDBBackups
-    scp /media/shop_smartbackup_${USER_DATE}.sql davidhale87@172.16.205.4:/halefiles/Coding/LogbookDBBackups 
-    scp /media/shop_smartbackup_${USER_DATE}_clean.sql davidhale87@172.16.205.4:/halefiles/Coding/LogbookDBBackups 
+    scp /media/shop_smartbackup_${USER_DATE}.sql $REMOTE_SERVER:$REMOTE_BACKUP_DIR/
+    scp /media/shop_smartbackup_${USER_DATE}_clean.sql $REMOTE_SERVER:$REMOTE_BACKUP_DIR/
 fi
 
 # Change to project directory
