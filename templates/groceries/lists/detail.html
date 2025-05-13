@@ -145,8 +145,9 @@
     <!-- Item List -->
     {% if list_items %}
     <div class="items-container">
-        {% if show_categories %}
-            <!-- Categorized View -->
+        <!-- Categorized View Container -->
+        <div class="categorized-view" {% if not show_categories %}style="display: none;"{% endif %}>
+            <!-- Uncategorized Items -->
             {% if uncategorized_items %}
             <div class="location-section">
                 <div class="location-header">Uncategorized</div>
@@ -218,6 +219,7 @@
             </div>
             {% endif %}
 
+            <!-- Categorized Items -->
             {% for location, items in locations.items %}
             <div class="location-section">
                 <div class="location-header">{{ location.name }}</div>
@@ -288,12 +290,14 @@
                 </div>
             </div>
             {% endfor %}
-        {% else %}
-            <!-- Flat List View (non-categorized) -->
+        </div>
+        
+        <!-- Flat List View Container -->
+        <div class="flat-view" {% if show_categories %}style="display: none;"{% endif %}>
             <div class="location-section">
                 <div class="card">
                     <ul class="list-items" id="flat-list">
-                        {% for item in all_items %}
+                        {% for item in list_items %}
                         <li class="list-item {% if item.checked %}checked{% endif %}" data-item-id="{{ item.id }}">
                             <div class="item-check">
                                 <div class="custom-checkbox {% if item.checked %}checked{% endif %}" data-item-id="{{ item.id }}" data-list-id="{{ list.id }}"></div>
@@ -357,7 +361,7 @@
                     </ul>
                 </div>
             </div>
-        {% endif %}
+        </div>
     </div>
     {% else %}
     <div class="empty-list card">

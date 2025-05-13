@@ -2,6 +2,50 @@
  * Shopping List Specific Styles
  */
 
+/* Store Mode and Edit Mode Styles */
+.mode-toggle-container {
+    display: flex;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 16px;
+}
+
+.mode-toggle-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.mode-toggle-btn svg {
+    margin-right: 6px;
+}
+
+.mode-toggle-btn.active {
+    background-color: var(--bg-primary);
+    color: var(--primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* View containers styling */
+.categorized-view, .flat-view {
+    width: 100%;
+}
+
+/* Hide category headers in store mode */
+#in-store-mode-content .location-header {
+    display: none !important;
+}
+
 /* Select2 custom styles */
 .select2-container {
     width: 100% !important;
