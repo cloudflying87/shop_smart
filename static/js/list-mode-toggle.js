@@ -59,6 +59,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 header.style.display = 'block';
             });
         }
+        
+        // Reinitialize checkbox listeners after mode change
+        if (typeof initializeCheckboxListeners === 'function') {
+            setTimeout(initializeCheckboxListeners, 50);
+        }
     }
     
     // Function to switch to In-store mode
@@ -86,6 +91,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Store the current mode in localStorage
         localStorage.setItem('shoppingListMode', 'inStore');
+        
+        // Reinitialize checkbox listeners after mode change
+        if (typeof initializeCheckboxListeners === 'function') {
+            setTimeout(initializeCheckboxListeners, 50);
+        }
     }
     
     // Function to show categorized view (with headers)

@@ -1,7 +1,84 @@
 /**
  * Main shopping list functionality
  */
+// Define a global function to initialize all checkbox listeners
+function initializeCheckboxListeners() {
+    // Checkbox toggle functionality
+    const checkboxes = document.querySelectorAll('.custom-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        // Remove any existing listeners first to prevent duplicates
+        checkbox.removeEventListener('click', handleCheckboxClick);
+        // Add fresh listener
+        checkbox.addEventListener('click', handleCheckboxClick);
+    });
+}
+
+// Handler function for checkbox clicks
+function handleCheckboxClick() {
+    const itemId = this.dataset.itemId;
+    const listId = this.dataset.listId;
+    const listItem = this.closest('.list-item');
+    
+    // Toggle visual state immediately for better UX
+    const isNowChecked = !this.classList.contains('checked');
+    
+    // Sync the checked state with the same item in both views
+    const allCheckboxes = document.querySelectorAll(`.custom-checkbox[data-item-id="${itemId}"]`);
+    const allListItems = document.querySelectorAll(`.list-item[data-item-id="${itemId}"]`);
+    
+    allCheckboxes.forEach(cb => {
+        if (isNowChecked) {
+            cb.classList.add('checked');
+        } else {
+            cb.classList.remove('checked');
+        }
+    });
+    
+    allListItems.forEach(li => {
+        if (isNowChecked) {
+            li.classList.add('checked');
+        } else {
+            li.classList.remove('checked');
+        }
+    });
+    
+    // Send toggle request to server
+    fetch(`/app/lists/${listId}/items/${itemId}/toggle/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Move checked item to the bottom of its section
+            if (isNowChecked) {
+                moveCheckedItemToBottom(listItem);
+            }
+            
+            // Update progress
+            updateProgress();
+        } else {
+            // Revert the visual state if there was an error
+            allCheckboxes.forEach(cb => cb.classList.toggle('checked'));
+            allListItems.forEach(li => li.classList.toggle('checked'));
+            console.error('Error toggling item:', data.error);
+        }
+    })
+    .catch(error => {
+        // Revert the visual state if there was an error
+        allCheckboxes.forEach(cb => cb.classList.toggle('checked'));
+        allListItems.forEach(li => li.classList.toggle('checked'));
+        console.error('Error:', error);
+    });
+}
+
 $(document).ready(function() {
+    // Initialize checkbox listeners when the page loads
+    initializeCheckboxListeners();
+    
     // Initialize Select2 for item search
     $('#item-select').select2({
         placeholder: 'Search for items to add...',
@@ -415,93 +492,49 @@ $(document).ready(function() {
         }
     }
     
-    // Checkbox toggle functionality
-    const checkboxes = document.querySelectorAll('.custom-checkbox');
-    
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('click', function() {
-            const itemId = this.dataset.itemId;
-            const listId = this.dataset.listId;
-            const listItem = this.closest('.list-item');
-            
-            // Toggle visual state immediately for better UX
-            checkbox.classList.toggle('checked');
-            if (listItem) {
-                listItem.classList.toggle('checked');
-            }
-            
-            // Send toggle request to server
-            fetch(`/app/lists/${listId}/items/${itemId}/toggle/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCSRFToken()
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Move checked item to the bottom of its section
-                    if (checkbox.classList.contains('checked')) {
-                        moveCheckedItemToBottom(listItem);
-                    }
-                    
-                    // Update progress
-                    updateProgress();
-                } else {
-                    // Revert the visual state if there was an error
-                    checkbox.classList.toggle('checked');
-                    if (listItem) {
-                        listItem.classList.toggle('checked');
-                    }
-                    console.error('Error toggling item:', data.error);
-                }
-            })
-            .catch(error => {
-                // Revert the visual state if there was an error
-                checkbox.classList.toggle('checked');
-                if (listItem) {
-                    listItem.classList.toggle('checked');
-                }
-                console.error('Error:', error);
-            });
-        });
-    });
+    // Checkbox handlers are now initialized at page load via initializeCheckboxListeners()
     
     // Function to move checked items to the bottom
     function moveCheckedItemToBottom(listItem) {
-        // Get the parent list container
-        let listContainer;
+        const itemId = listItem.dataset.itemId;
         
-        // Check if we're in flat list or categorized view
-        const flatList = document.getElementById('flat-list');
-        if (flatList) {
-            // We're in flat list view mode
-            listContainer = flatList;
-        } else {
-            // We're in categorized view mode
-            const locationSection = listItem.closest('.location-section');
-            if (locationSection) {
-                listContainer = locationSection.querySelector('.list-items');
-            }
-        }
+        // Find all instances of this item in both views
+        const allListItems = document.querySelectorAll(`.list-item[data-item-id="${itemId}"]`);
         
-        if (listContainer) {
-            // Apply transition effect
-            listItem.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            listItem.style.opacity = '0.5';
-            listItem.style.transform = 'translateX(10px)';
+        // Move each instance to the bottom of its respective container
+        allListItems.forEach(item => {
+            // Get the parent list container
+            let listContainer = null;
             
-            setTimeout(() => {
-                // Move the item to the end of its list
-                listContainer.appendChild(listItem);
+            // If this item is in the flat list
+            if (item.closest('#flat-list')) {
+                listContainer = document.getElementById('flat-list');
+            } else {
+                // If this item is in a category section
+                const locationSection = item.closest('.location-section');
+                if (locationSection) {
+                    listContainer = locationSection.querySelector('.list-items');
+                }
+            }
+            
+            if (listContainer) {
+                // Apply transition effect
+                item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                item.style.opacity = '0.5';
+                item.style.transform = 'translateX(10px)';
                 
-                // Restore visibility with animation
                 setTimeout(() => {
-                    listItem.style.opacity = '1';
-                    listItem.style.transform = 'translateX(0)';
-                }, 50);
-            }, 300);
-        }
+                    // Move the item to the end of its list
+                    listContainer.appendChild(item);
+                    
+                    // Restore visibility with animation
+                    setTimeout(() => {
+                        item.style.opacity = '1';
+                        item.style.transform = 'translateX(0)';
+                    }, 50);
+                }, 300);
+            }
+        });
     }
     
     // Toast notification function

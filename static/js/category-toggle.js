@@ -69,6 +69,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentShowCategories = localStorage.getItem('showCategories') === 'true';
         localStorage.setItem('showCategories', (!currentShowCategories).toString());
         setActiveView();
+        
+        // Ensure checkbox listeners are reinitialized after the view change
+        if (typeof initializeCheckboxListeners === 'function') {
+            setTimeout(initializeCheckboxListeners, 50); // Small delay to ensure DOM is updated
+        }
     }
     
     // Add click handler
@@ -106,6 +111,11 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleView();
             // Re-enable button
             categoryToggleBtn.disabled = false;
+            
+            // Reinitialize checkbox listeners after view change
+            if (typeof initializeCheckboxListeners === 'function') {
+                initializeCheckboxListeners();
+            }
         })
         .catch(error => {
             console.error('Error:', error);
