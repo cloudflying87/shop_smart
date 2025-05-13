@@ -3,11 +3,11 @@
  * Provides offline functionality and caching
  */
 
-// Cache names
-const STATIC_CACHE = 'shopsmart-static-v2';
-const DYNAMIC_CACHE = 'shopsmart-dynamic-v2';
-const API_CACHE = 'shopsmart-api-v2';
-const IMAGE_CACHE = 'shopsmart-images-v2';
+// Cache names - incrementing versions forces cache refresh on updates
+const STATIC_CACHE = 'shopsmart-static-v3';
+const DYNAMIC_CACHE = 'shopsmart-dynamic-v3';
+const API_CACHE = 'shopsmart-api-v3';
+const IMAGE_CACHE = 'shopsmart-images-v3';
 
 // Resources to cache immediately on install
 const STATIC_ASSETS = [
