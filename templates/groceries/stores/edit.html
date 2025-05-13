@@ -59,7 +59,7 @@
                                 <div class="custom-control custom-checkbox">
                                     <input type="checkbox" class="custom-control-input" id="family_{{ family.id }}" name="families[]" value="{{ family.id }}"
                                            {% if family in store.families.all %}checked{% endif %}>
-                                    <label class="custom-control-label" for="family_{{ family.id }}">{{ family.name }}</label>
+                                    <label class="custom-control-label" for="family_{{ family.id }}" title="{{ family.name }}">{{ family.name }}</label>
                                 </div>
                                 {% endfor %}
                             </div>
@@ -109,12 +109,31 @@
     
     .families-selector {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 0.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
     }
-    
+
+    .custom-control {
+        display: flex;
+        align-items: flex-start;
+        min-height: 24px;
+        padding-left: 1.75rem;
+        margin-bottom: 0.5rem;
+        max-width: 100%;
+    }
+
+    .custom-control-input {
+        position: absolute;
+        margin-left: -1.75rem;
+    }
+
     .custom-control-label {
         font-weight: normal;
+        position: relative;
+        margin-bottom: 0;
+        vertical-align: top;
+        padding-left: 0.25rem;
+        display: block;
     }
     
     .form-actions {
@@ -134,6 +153,13 @@
     }
     
     @media (max-width: 768px) {
+        .families-selector {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
         .families-selector {
             grid-template-columns: 1fr;
         }

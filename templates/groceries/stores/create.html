@@ -13,9 +13,41 @@
             <h2 class="card-title">Add New Store</h2>
         </div>
         <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
+            <!-- Store search and suggestions -->
+            <div class="form-section store-search-section">
+                <h3 class="section-title">Quick Add Store</h3>
+                <p class="section-help">Search for a store to automatically fill in details, or choose from common stores below</p>
+
+                <div class="search-container mb-4">
+                    <div class="form-row">
+                        <div class="col-md-9 col-sm-8">
+                            <input type="text" id="store-search" class="form-control" placeholder="Search for a store (e.g., Walmart, Target, Kroger)">
+                        </div>
+                        <div class="col-md-3 col-sm-4">
+                            <button type="button" id="search-btn" class="btn btn-primary btn-block">Search</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Common stores list -->
+                <div id="common-stores" class="common-stores">
+                    <div class="common-stores-grid">
+                        <!-- Common stores will be loaded here via JS -->
+                        <div class="store-loading text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading stores...</span>
+                            </div>
+                            <p class="mt-2">Loading popular stores...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store form -->
+            <form method="post" enctype="multipart/form-data" id="store-form">
                 {% csrf_token %}
-                
+                <input type="hidden" name="logo_url" id="logo_url" value="">
+
                 <div class="form-section">
                     <h3 class="section-title">Store Information</h3>
                     <div class="form-row">
@@ -33,11 +65,18 @@
                             {{ form.website|as_crispy_field }}
                         </div>
                         <div class="form-group col-md-6">
+                            <div class="logo-preview-container mb-2" style="display: none;">
+                                <label>Logo Preview:</label>
+                                <div class="d-flex align-items-center">
+                                    <img id="logo-preview" src="" alt="Store Logo Preview" class="store-logo-preview mr-3">
+                                    <p class="text-muted mb-0 logo-note">This logo will be automatically downloaded when you create the store.</p>
+                                </div>
+                            </div>
                             {{ form.logo|as_crispy_field }}
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="form-section">
                     <h3 class="section-title">Family Access</h3>
                     <p class="section-help">Select which families can access this store</p>
@@ -46,7 +85,7 @@
                             <div class="families-selector">
                                 {% for family in families %}
                                 <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input" id="family_{{ family.id }}" name="families[]" value="{{ family.id }}">
+                                    <input type="checkbox" class="custom-control-input" id="family_{{ family.id }}" name="families[]" value="{{ family.id }}" {% if default_family and family.id == default_family.id %}checked{% endif %}>
                                     <label class="custom-control-label" for="family_{{ family.id }}">{{ family.name }}</label>
                                 </div>
                                 {% endfor %}
@@ -54,7 +93,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Create Store</button>
                     <a href="{% url 'groceries:stores' %}" class="btn btn-outline">Cancel</a>
@@ -65,55 +104,300 @@
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load common stores on page load
+        loadCommonStores();
+
+        // Set up store search button
+        document.getElementById('search-btn').addEventListener('click', searchStore);
+
+        // Search when Enter key is pressed in the search input
+        document.getElementById('store-search').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                searchStore();
+            }
+        });
+
+        // Function to load common stores
+        function loadCommonStores() {
+            fetch('/api/stores/search/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.stores && data.stores.length > 0) {
+                        const storesContainer = document.querySelector('.common-stores-grid');
+                        storesContainer.innerHTML = ''; // Clear loading spinner
+
+                        // Create store cards for each common store
+                        data.stores.forEach(store => {
+                            const storeCard = createStoreCard(store);
+                            storesContainer.appendChild(storeCard);
+                        });
+                    } else {
+                        showError('No common stores found');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading common stores:', error);
+                    showError('Failed to load common stores');
+                });
+        }
+
+        // Function to search for a store
+        function searchStore() {
+            const query = document.getElementById('store-search').value.trim();
+            if (!query) return;
+
+            // Show loading state
+            const searchBtn = document.getElementById('search-btn');
+            const originalBtnText = searchBtn.innerHTML;
+            searchBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Searching...';
+            searchBtn.disabled = true;
+
+            fetch(`/api/stores/search/?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Reset button
+                    searchBtn.innerHTML = originalBtnText;
+                    searchBtn.disabled = false;
+
+                    if (data.success && data.store) {
+                        // Fill the form with store data
+                        fillStoreForm(data.store);
+                    } else {
+                        // Show error message
+                        showMessage('Store not found. Please enter store details manually.', 'warning');
+                    }
+                })
+                .catch(error => {
+                    // Reset button and show error
+                    searchBtn.innerHTML = originalBtnText;
+                    searchBtn.disabled = false;
+                    console.error('Error searching for store:', error);
+                    showMessage('Error searching for store. Please try again.', 'danger');
+                });
+        }
+
+        // Function to create a store card
+        function createStoreCard(store) {
+            const card = document.createElement('div');
+            card.className = 'store-card';
+            card.innerHTML = `
+                <img src="${store.logo_url}" alt="${store.name}" class="store-logo">
+                <div class="store-name">${store.name}</div>
+            `;
+
+            // Set up click handler to fill the form with this store's data
+            card.addEventListener('click', function() {
+                fillStoreForm(store);
+
+                // Scroll to the form
+                document.querySelector('.section-title').scrollIntoView({ behavior: 'smooth' });
+
+                // Show a message
+                showMessage(`Store "${store.name}" details loaded. You can modify them before creating the store.`, 'success');
+            });
+
+            return card;
+        }
+
+        // Function to fill the form with store data
+        function fillStoreForm(store) {
+            // Fill form fields
+            document.getElementById('id_name').value = store.name;
+            document.getElementById('id_address').value = store.address || '';
+            document.getElementById('id_website').value = store.website || '';
+
+            // Set the hidden logo URL field
+            document.getElementById('logo_url').value = store.logo_url || '';
+
+            // Show logo preview if available
+            if (store.logo_url) {
+                document.getElementById('logo-preview').src = store.logo_url;
+                document.querySelector('.logo-preview-container').style.display = 'block';
+            } else {
+                document.querySelector('.logo-preview-container').style.display = 'none';
+            }
+        }
+
+        // Function to show error in the common stores container
+        function showError(message) {
+            const storesContainer = document.querySelector('.common-stores-grid');
+            storesContainer.innerHTML = `
+                <div class="alert alert-warning text-center w-100" role="alert">
+                    <i class="fas fa-exclamation-triangle mr-2"></i> ${message}
+                </div>
+            `;
+        }
+
+        // Function to show a message above the form
+        function showMessage(message, type = 'info') {
+            // Create message element
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            messageDiv.role = 'alert';
+            messageDiv.innerHTML = `
+                ${message}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            `;
+
+            // Insert before the form section
+            const formSection = document.querySelector('.form-section');
+            formSection.parentNode.insertBefore(messageDiv, formSection);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+    });
+</script>
+{% endblock %}
+
 {% block extra_css %}
 <style>
     .create-store-container {
         max-width: 800px;
         margin: 0 auto;
     }
-    
+
     .form-section {
         margin-bottom: 2rem;
         padding-bottom: 1.5rem;
         border-bottom: 1px solid var(--border-light);
     }
-    
+
     .form-section:last-child {
         border-bottom: none;
         padding-bottom: 0;
     }
-    
+
     .section-title {
         font-size: 1.25rem;
         margin-bottom: 1rem;
         color: var(--text-primary);
     }
-    
+
     .section-help {
         color: var(--text-tertiary);
         margin-bottom: 1rem;
         font-size: 0.9rem;
     }
-    
+
     .families-selector {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 0.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
     }
-    
+
+    .custom-control {
+        display: flex;
+        align-items: flex-start;
+        min-height: 24px;
+        padding-left: 1.75rem;
+        margin-bottom: 0.5rem;
+        max-width: 100%;
+    }
+
+    .custom-control-input {
+        position: absolute;
+        margin-left: -1.75rem;
+    }
+
     .custom-control-label {
         font-weight: normal;
+        position: relative;
+        margin-bottom: 0;
+        vertical-align: top;
+        padding-left: 0.25rem;
+        display: block;
     }
-    
+
     .form-actions {
         display: flex;
         gap: 1rem;
         margin-top: 2rem;
     }
-    
+
+    /* Store search and common stores styling */
+    .common-stores-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .store-card {
+        border: 1px solid var(--border-light);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background-color: var(--background-secondary);
+    }
+
+    .store-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        border-color: var(--primary);
+    }
+
+    .store-logo {
+        width: 64px;
+        height: 64px;
+        object-fit: contain;
+        margin: 0 auto 0.75rem;
+        border-radius: var(--border-radius-sm);
+        background-color: white;
+        padding: 0.25rem;
+    }
+
+    .store-name {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .store-logo-preview {
+        width: 64px;
+        height: 64px;
+        object-fit: contain;
+        border-radius: var(--border-radius-sm);
+        background-color: white;
+        padding: 0.25rem;
+        border: 1px solid var(--border-light);
+    }
+
+    .logo-note {
+        font-size: 0.8rem;
+    }
+
     @media (max-width: 768px) {
         .families-selector {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .common-stores-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .families-selector {
             grid-template-columns: 1fr;
+        }
+
+        .common-stores-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 </style>

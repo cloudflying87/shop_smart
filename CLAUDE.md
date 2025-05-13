@@ -16,6 +16,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Lint checks: `flake8`
 - Import sorting: `isort .`
 - Populate product database: `python manage.py populate_products --limit 100`
+- Populate store database: `python manage.py populate_stores`
+- Add basic household items: `python manage.py add_basic_items`
 
 ### Docker Development
 - Start development services: `docker-compose -f docker-compose.dev.yml up -d`
@@ -23,6 +25,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Run tests in container: `docker-compose -f docker-compose.dev.yml exec web python manage.py test`
 - Create superuser in container: `docker-compose -f docker-compose.dev.yml exec web python manage.py createsuperuser`
 - View logs: `docker-compose -f docker-compose.dev.yml logs -f web`
+- Populate database in container:
+  - Products: `docker-compose -f docker-compose.dev.yml exec web python manage.py populate_products --limit 100`
+  - Stores: `docker-compose -f docker-compose.dev.yml exec web python manage.py populate_stores`
+  - Basic Items: `docker-compose -f docker-compose.dev.yml exec web python manage.py add_basic_items`
 
 ## Code Style Guidelines
 

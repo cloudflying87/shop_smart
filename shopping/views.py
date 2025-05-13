@@ -22,7 +22,10 @@ from .forms import (
     UserRegistrationForm
 )
 from .recommender import ShoppingRecommender
-from .store_utils import create_default_store_locations
+from .store_utils import (
+    create_default_store_locations, get_common_store_data,
+    search_store_info, save_store_logo_from_url
+)
 
 # Import category-based item selection views
 from .views_category import CategoryItemSelectionView, AddMultipleItemsView
@@ -675,6 +678,10 @@ class StoreCreateView(LoginRequiredMixin, CreateView):
     template_name = 'groceries/stores/create.html'
 
     def form_valid(self, form):
+        # Check if we have a logo_url in the request
+        logo_url = self.request.POST.get('logo_url', '')
+
+        # Save the model first
         response = super().form_valid(form)
 
         # Add this store to the user's families
@@ -695,6 +702,10 @@ class StoreCreateView(LoginRequiredMixin, CreateView):
         if families:
             self.object.families.add(*families)
 
+        # Download and save logo if a URL was provided and no logo was uploaded
+        if logo_url and not self.object.logo:
+            save_store_logo_from_url(self.object, logo_url)
+
         # Create default store locations
         locations = create_default_store_locations(self.object)
 
@@ -712,12 +723,22 @@ class StoreCreateView(LoginRequiredMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
-        
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['families'] = Family.objects.filter(
             members__user=self.request.user
         ).distinct()
+
+        # Get default family (or first family if no default set)
+        user_profile = self.request.user.profile
+        if user_profile.default_family:
+            context['default_family'] = user_profile.default_family
+        elif context['families'].exists():
+            context['default_family'] = context['families'].first()
+        else:
+            context['default_family'] = None
+
         return context
 
 class StoreUpdateView(LoginRequiredMixin, UpdateView):
@@ -1121,23 +1142,52 @@ class RemoveFamilyMemberView(LoginRequiredMixin, View):
 
 class UpdateThemeView(LoginRequiredMixin, View):
     """API endpoint to update user theme preference"""
-    
+
     def post(self, request):
         try:
             dark_mode = request.POST.get('dark_mode') == 'true'
-            
+
             # Get or create user profile
             profile, created = UserProfile.objects.get_or_create(user=request.user)
-            
+
             # Update theme preference
             profile.dark_mode = dark_mode
             profile.save(update_fields=['dark_mode'])
-            
+
             return JsonResponse({
                 'success': True,
                 'dark_mode': dark_mode
             })
-            
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+
+class StoreSearchView(LoginRequiredMixin, View):
+    """API endpoint to search for store information"""
+
+    def get(self, request):
+        query = request.GET.get('query', '').strip()
+
+        if not query:
+            # Return popular stores if no query
+            stores = get_common_store_data()[:6]
+            return JsonResponse({
+                'success': True,
+                'stores': stores
+            })
+
+        try:
+            # Search for store info
+            store_info = search_store_info(query)
+
+            return JsonResponse({
+                'success': True,
+                'store': store_info
+            })
+
         except Exception as e:
             return JsonResponse({
                 'success': False,

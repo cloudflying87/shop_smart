@@ -61,6 +61,7 @@ urlpatterns = [
     
     # API endpoints - these are duplicated at the root level in shop_smart/urls.py
     # path('api/items/search/', views.GroceryItemSearchView.as_view(), name='item_search'),
+    path('api/stores/search/', views.StoreSearchView.as_view(), name='store_search'),
     
     # User Profile
     path('profile/', views.UserProfileView.as_view(), name='profile'),
