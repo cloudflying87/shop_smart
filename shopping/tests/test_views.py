@@ -14,7 +14,7 @@ class HomeViewTests(TestCase):
     
     def setUp(self):
         self.client = Client()
-        self.home_url = reverse('home')
+        self.home_url = reverse('landing')
         
     def test_home_view_unauthenticated(self):
         """Test that the home view redirects unauthenticated users to login page"""
@@ -30,7 +30,7 @@ class DashboardViewTests(TestCase):
     
     def setUp(self):
         self.client = Client()
-        self.dashboard_url = reverse('dashboard')
+        self.dashboard_url = reverse('groceries:dashboard')
         
         # Create a test user
         self.user = User.objects.create_user(
@@ -88,15 +88,16 @@ class DashboardViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         
         # Check context data
-        self.assertIn('active_lists', response.context)
-        self.assertIn('completed_lists', response.context)
+        self.assertIn('recent_lists', response.context)
         self.assertIn('family', response.context)
-        
-        # Verify the lists are in the correct categories
-        self.assertEqual(len(response.context['active_lists']), 1)
-        self.assertEqual(len(response.context['completed_lists']), 1)
-        self.assertEqual(response.context['active_lists'][0], self.active_list)
-        self.assertEqual(response.context['completed_lists'][0], self.completed_list)
+
+        # Verify the recent lists include both lists
+        self.assertEqual(len(response.context['recent_lists']), 2)
+
+        # Check that both lists are included in recent_lists
+        recent_list_ids = [list_obj.id for list_obj in response.context['recent_lists']]
+        self.assertIn(self.active_list.id, recent_list_ids)
+        self.assertIn(self.completed_list.id, recent_list_ids)
 
 
 class ShoppingListViewTests(TestCase):
@@ -164,10 +165,10 @@ class ShoppingListViewTests(TestCase):
         )
         
         # URLs
-        self.list_create_url = reverse('shopping_list_create')
-        self.list_detail_url = reverse('shopping_list_detail', args=[self.shopping_list.id])
-        self.list_edit_url = reverse('shopping_list_edit', args=[self.shopping_list.id])
-        self.list_delete_url = reverse('shopping_list_delete', args=[self.shopping_list.id])
+        self.list_create_url = reverse('groceries:create_list')
+        self.list_detail_url = reverse('groceries:list_detail', args=[self.shopping_list.id])
+        self.list_edit_url = reverse('groceries:edit_list', args=[self.shopping_list.id])
+        self.list_delete_url = reverse('groceries:delete_list', args=[self.shopping_list.id])
         
     def test_list_create_view(self):
         """Test the shopping list creation view"""
@@ -176,7 +177,7 @@ class ShoppingListViewTests(TestCase):
         # Test GET request
         response = self.client.get(self.list_create_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shopping/lists/create.html')
+        self.assertTemplateUsed(response, 'groceries/lists/create.html')
         
         # Test POST request
         post_data = {
@@ -200,7 +201,7 @@ class ShoppingListViewTests(TestCase):
         
         response = self.client.get(self.list_detail_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shopping/lists/detail.html')
+        self.assertTemplateUsed(response, 'groceries/lists/detail.html')
         
         # Check context data
         self.assertEqual(response.context['shopping_list'], self.shopping_list)
@@ -215,7 +216,7 @@ class ShoppingListViewTests(TestCase):
         # Test GET request
         response = self.client.get(self.list_edit_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shopping/lists/edit.html')
+        self.assertTemplateUsed(response, 'groceries/lists/edit.html')
         
         # Test POST request
         post_data = {
@@ -237,7 +238,7 @@ class ShoppingListViewTests(TestCase):
         # Test GET request (confirmation page)
         response = self.client.get(self.list_delete_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shopping/lists/confirm_delete.html')
+        self.assertTemplateUsed(response, 'groceries/lists/confirm_delete.html')
         
         # Test POST request (actual deletion)
         response = self.client.post(self.list_delete_url, follow=True)
@@ -296,7 +297,7 @@ class ItemManagementViewTests(TestCase):
         )
         
         # URLs
-        self.item_add_url = reverse('item_add', args=[self.shopping_list.id])
+        self.item_add_url = reverse('groceries:add_list_item', args=[self.shopping_list.id])
         
     def test_item_add_view(self):
         """Test adding an item to a shopping list"""
@@ -305,7 +306,7 @@ class ItemManagementViewTests(TestCase):
         # Test GET request
         response = self.client.get(self.item_add_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'shopping/items/create.html')
+        self.assertTemplateUsed(response, 'groceries/items/create.html')
         
         # Test POST request with existing item
         post_data = {

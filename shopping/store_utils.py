@@ -162,6 +162,108 @@ def get_common_store_data():
             "website": "https://www.cub.com",
             "logo_url": "https://logo.clearbit.com/cub.com",
             "address": "Varies by location"
+        },
+        {
+            "name": "Karns Foods",
+            "website": "https://www.karnsfoods.com",
+            "logo_url": "https://logo.clearbit.com/karnsfoods.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "H-E-B",
+            "website": "https://www.heb.com",
+            "logo_url": "https://logo.clearbit.com/heb.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "ShopRite",
+            "website": "https://www.shoprite.com",
+            "logo_url": "https://logo.clearbit.com/shoprite.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Winn-Dixie",
+            "website": "https://www.winndixie.com",
+            "logo_url": "https://logo.clearbit.com/winndixie.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Stop & Shop",
+            "website": "https://www.stopandshop.com",
+            "logo_url": "https://logo.clearbit.com/stopandshop.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Harris Teeter",
+            "website": "https://www.harristeeter.com",
+            "logo_url": "https://logo.clearbit.com/harristeeter.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Hannaford",
+            "website": "https://www.hannaford.com",
+            "logo_url": "https://logo.clearbit.com/hannaford.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Piggly Wiggly",
+            "website": "https://www.pigglywiggly.com",
+            "logo_url": "https://logo.clearbit.com/pigglywiggly.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Save A Lot",
+            "website": "https://www.savealot.com",
+            "logo_url": "https://logo.clearbit.com/savealot.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Vons",
+            "website": "https://www.vons.com",
+            "logo_url": "https://logo.clearbit.com/vons.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Acme Markets",
+            "website": "https://www.acmemarkets.com",
+            "logo_url": "https://logo.clearbit.com/acmemarkets.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "WinCo Foods",
+            "website": "https://www.wincofoods.com",
+            "logo_url": "https://logo.clearbit.com/wincofoods.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Ralphs",
+            "website": "https://www.ralphs.com",
+            "logo_url": "https://logo.clearbit.com/ralphs.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Lidl",
+            "website": "https://www.lidl.com",
+            "logo_url": "https://logo.clearbit.com/lidl.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "BJ's Wholesale",
+            "website": "https://www.bjs.com",
+            "logo_url": "https://logo.clearbit.com/bjs.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Market Basket",
+            "website": "https://www.shopmarketbasket.com",
+            "logo_url": "https://logo.clearbit.com/shopmarketbasket.com",
+            "address": "Varies by location"
+        },
+        {
+            "name": "Price Chopper",
+            "website": "https://www.pricechopper.com",
+            "logo_url": "https://logo.clearbit.com/pricechopper.com",
+            "address": "Varies by location"
         }
     ]
 
@@ -205,21 +307,87 @@ def search_store_info(query):
 def save_store_logo_from_url(store, logo_url):
     """
     Downloads a logo from a URL and saves it to the store object.
+
+    Args:
+        store: GroceryStore object to save the logo to
+        logo_url: URL of the logo to download
+
+    Returns:
+        bool: True if successful, False otherwise
     """
     if not logo_url:
-        return
+        return False
 
     try:
-        # Download the image
-        response = urllib.request.urlopen(logo_url)
-        logo_data = response.read()
+        # Create a proper request with user agent to avoid being blocked
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        req = urllib.request.Request(logo_url, headers=headers)
 
-        # Extract filename from URL
-        filename = f"{store.id}_{store.name.lower().replace(' ', '_')}_logo.png"
+        # Download the image
+        with urllib.request.urlopen(req, timeout=10) as response:
+            logo_data = response.read()
+            content_type = response.headers.get('Content-Type', '').lower()
+
+        # Check if we got valid image data
+        if len(logo_data) < 100:  # Too small to be a valid image
+            print(f"Downloaded data too small for {logo_url}")
+            return False
+
+        # Check content type for basic image validation
+        valid_image_types = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp']
+        if not any(image_type in content_type for image_type in valid_image_types):
+            print(f"Content type '{content_type}' does not appear to be an image for {logo_url}")
+            
+            # Additional validation: Check for image signatures
+            # JPEG starts with FF D8
+            # PNG starts with 89 50 4E 47
+            # GIF starts with 47 49 46 38
+            is_jpeg = logo_data[:2] == b'\xff\xd8'
+            is_png = logo_data[:4] == b'\x89PNG'
+            is_gif = logo_data[:4] == b'GIF8'
+            
+            if not (is_jpeg or is_png or is_gif):
+                return False
+            # If we detected a valid image signature, continue despite the content type
+
+        # Create safe filename
+        safe_name = store.name.lower().replace(' ', '_').replace("'", "")
+        
+        # Determine extension based on content type or default to png
+        if 'jpeg' in content_type or 'jpg' in content_type:
+            ext = 'jpg'
+        elif 'png' in content_type:
+            ext = 'png'
+        elif 'gif' in content_type:
+            ext = 'gif'
+        elif 'svg' in content_type:
+            ext = 'svg'
+        elif 'webp' in content_type:
+            ext = 'webp'
+        else:
+            ext = 'png'  # Default to png
+            
+        filename = f"{store.id}_{safe_name}_logo.{ext}"
+
+        # Save the image directly
+        import tempfile
+        
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(logo_data)
+            temp_file_path = temp_file.name
 
         # Save the image
-        store.logo.save(filename, ContentFile(logo_data), save=True)
+        with open(temp_file_path, 'rb') as temp_file:
+            store.logo.save(filename, ContentFile(temp_file.read()), save=True)
+
+        # Clean up temporary file
+        os.unlink(temp_file_path)
+
         return True
     except Exception as e:
+        import traceback
         print(f"Error saving logo: {str(e)}")
+        print(traceback.format_exc())
         return False

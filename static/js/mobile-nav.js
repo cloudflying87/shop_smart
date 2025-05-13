@@ -156,13 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function initBottomNav() {
     const bottomNav = document.querySelector('.bottom-nav');
     if (!bottomNav) return;
-    
+
     // Get current URL path
     const currentPath = window.location.pathname;
-    
+
     // Find all nav links
     const navLinks = bottomNav.querySelectorAll('.bottom-nav-link');
-    
+
     // Highlight current section
     navLinks.forEach(link => {
       const linkPath = link.getAttribute('href');
@@ -170,15 +170,29 @@ document.addEventListener('DOMContentLoaded', () => {
         link.classList.add('active');
       }
     });
-    
+
     // Special case for home page
     if (currentPath === '/' || currentPath === '/dashboard/') {
-      const homeLink = bottomNav.querySelector('[href="/"]') || 
+      const homeLink = bottomNav.querySelector('[href="/"]') ||
                        bottomNav.querySelector('[href="/dashboard/"]');
       if (homeLink) {
         homeLink.classList.add('active');
       }
     }
+
+    // Handle scrolling effects for bottom nav and floating action button
+    window.addEventListener('scroll', function() {
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollPosition = window.scrollY + window.innerHeight;
+      const footerHeight = bottomNav.offsetHeight * 3; // Approximate footer height with some margin
+
+      // Check if we're near the bottom of the page
+      if (scrollHeight - scrollPosition <= footerHeight) {
+        bottomNav.classList.add('near-bottom');
+      } else {
+        bottomNav.classList.remove('near-bottom');
+      }
+    });
   }
   
   /**

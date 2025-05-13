@@ -17,6 +17,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Import sorting: `isort .`
 - Populate product database: `python manage.py populate_products --limit 100`
 - Populate store database: `python manage.py populate_stores`
+  - List available stores: `python manage.py populate_stores --list`
+  - Add specific stores: `python manage.py populate_stores --stores "Walmart" "Target"`
+  - Skip logo downloads: `python manage.py populate_stores --nologos`
+  - Associate with specific family: `python manage.py populate_stores --family 1`
 - Add basic household items: `python manage.py add_basic_items`
 
 ### Docker Development
@@ -28,6 +32,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Populate database in container:
   - Products: `docker-compose -f docker-compose.dev.yml exec web python manage.py populate_products --limit 100`
   - Stores: `docker-compose -f docker-compose.dev.yml exec web python manage.py populate_stores`
+    - List available stores: `docker-compose -f docker-compose.dev.yml exec web python manage.py populate_stores --list`
+    - Add specific stores: `docker-compose -f docker-compose.dev.yml exec web python manage.py populate_stores --stores "Walmart" "Target"`
+    - Skip logo downloads: `docker-compose -f docker-compose.dev.yml exec web python manage.py populate_stores --nologos`
   - Basic Items: `docker-compose -f docker-compose.dev.yml exec web python manage.py add_basic_items`
 
 ## Code Style Guidelines

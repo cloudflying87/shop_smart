@@ -9,13 +9,24 @@
 <div class="stores-container">
     <!-- Action Buttons -->
     <div class="action-buttons mb-4">
-        <a href="{% url 'groceries:create_store' %}" class="btn btn-primary">
+        <a href="{% url 'groceries:create_store' %}" class="btn btn-primary mr-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-1">
                 <path fill="none" d="M0 0h24v24H0z"/>
                 <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
             </svg>
             Add Store
         </a>
+
+        <form id="delete-all-stores-form" method="post" action="{% url 'groceries:delete_all_stores' %}" class="d-inline-block">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger" id="delete-all-stores-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" class="mr-1">
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path d="M7 4V2h10v2h5v2h-2v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6H2V4h5zM6 6v14h12V6H6zm3 3h2v8H9V9zm4 0h2v8h-2V9z" fill="currentColor"/>
+                </svg>
+                Delete All Stores
+            </button>
+        </form>
     </div>
     
     {% if stores %}
@@ -52,6 +63,16 @@
                             <a href="{% url 'groceries:store_detail' pk=store.pk %}" class="btn btn-primary btn-sm">View</a>
                             <a href="{% url 'groceries:edit_store' pk=store.pk %}" class="btn btn-outline btn-sm">Edit</a>
                             <a href="{% url 'groceries:create_list' %}?store={{ store.pk }}" class="btn btn-outline btn-sm">Create List</a>
+                            <form method="post" action="{% url 'groceries:delete_store' pk=store.pk %}" class="d-inline store-delete-form">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                        <path fill="none" d="M0 0h24v24H0z"/>
+                                        <path d="M7 4V2h10v2h5v2h-2v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6H2V4h5zM6 6v14h12V6H6zm3 3h2v8H9V9zm4 0h2v8h-2V9z" fill="currentColor"/>
+                                    </svg>
+                                    Delete
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -71,7 +92,10 @@
                 </div>
                 <h2>No Stores Yet</h2>
                 <p class="mb-4">Add stores to start creating shopping lists</p>
-                <a href="{% url 'groceries:create_store' %}" class="btn btn-primary">Add Store</a>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'groceries:create_store' %}" class="btn btn-primary">Add Store</a>
+                    <a href="{% url 'groceries:populate_stores' %}" class="btn btn-secondary">Add Popular Stores</a>
+                </div>
             </div>
         </div>
     </div>
@@ -79,14 +103,67 @@
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle delete all stores form
+        const deleteForm = document.getElementById('delete-all-stores-form');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function(e) {
+                const confirmed = confirm('WARNING: This will permanently delete ALL stores and their locations. This action cannot be undone. Are you sure?');
+                if (!confirmed) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // Show loading state
+                const btn = this.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+
+                return true;
+            });
+        }
+
+        // Handle individual store delete forms
+        const storeDeleteForms = document.querySelectorAll('.store-delete-form');
+        if (storeDeleteForms.length > 0) {
+            storeDeleteForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const storeName = this.closest('.store-card').querySelector('.store-name').textContent;
+                    const confirmed = confirm(`Are you sure you want to delete "${storeName}"? This will also delete all associated store locations.`);
+                    if (!confirmed) {
+                        e.preventDefault();
+                        return false;
+                    }
+
+                    // Show loading state
+                    const btn = this.querySelector('button[type="submit"]');
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+                    return true;
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
+
 {% block extra_css %}
 <style>
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
     .store-grid {
         display: grid;
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-    
+
     .store-card {
         display: flex;
         background-color: var(--bg-primary);
@@ -96,12 +173,12 @@
         padding: 1rem;
         transition: transform 0.2s, box-shadow 0.2s;
     }
-    
+
     .store-card:hover {
         transform: translateY(-2px);
         box-shadow: var(--shadow-md);
     }
-    
+
     .store-icon {
         display: flex;
         justify-content: center;
@@ -111,44 +188,77 @@
         margin-right: 1rem;
         color: var(--primary);
     }
-    
+
     .store-icon img {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
     }
-    
+
     .store-content {
         flex: 1;
     }
-    
+
     .store-name {
         margin: 0 0 0.5rem 0;
         font-size: 1.25rem;
     }
-    
+
     .store-meta {
         color: var(--text-tertiary);
         font-size: 0.9rem;
         margin-bottom: 1rem;
     }
-    
+
     .store-actions {
         display: flex;
         gap: 0.5rem;
         align-items: center;
     }
-    
+
     .empty-state {
         text-align: center;
         padding: 3rem 1rem;
     }
-    
+
     .empty-state-icon {
         color: var(--primary);
         margin-bottom: 1rem;
     }
-    
+
+    .gap-3 {
+        gap: 0.75rem;
+    }
+
+    .btn-secondary {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-medium);
+    }
+
+    .btn-secondary:hover {
+        background-color: var(--bg-tertiary);
+    }
+
+    /* Style for delete button */
+    .btn-outline-danger {
+        color: var(--danger);
+        border-color: var(--danger);
+    }
+
+    .btn-outline-danger:hover {
+        background-color: var(--danger);
+        color: white;
+    }
+
+    .d-inline {
+        display: inline-block;
+    }
+
+    .store-delete-form {
+        margin-left: 0.25rem;
+    }
+
     @media (min-width: 768px) {
         .store-grid {
             grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));

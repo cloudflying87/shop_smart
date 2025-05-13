@@ -289,7 +289,21 @@
                 data: function(params) {
                     return {
                         query: params.term
+                        // The backend will now use the user's default family if not specified
                     };
+                },
+                error: function(xhr, status, error) {
+                    console.error('Select2 API error:', error);
+                    if (xhr.status === 400) {
+                        // Show an error message to set default family
+                        const $errorSpan = $('<div class="alert alert-warning mt-2">Please set a default family in your profile to use search.</div>');
+                        $('#product-search').after($errorSpan);
+                        setTimeout(function() {
+                            $errorSpan.fadeOut(function() {
+                                $(this).remove();
+                            });
+                        }, 5000);
+                    }
                 },
                 processResults: function(data) {
                     return {

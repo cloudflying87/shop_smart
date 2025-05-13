@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Populate Stores | ShopSmart{% endblock %}
+{% block header_title %}Populate Stores{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/store-populate.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="populate-stores-container">
+    <!-- Introduction Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title h4 mb-3">Add Popular Grocery Stores</h2>
+            <p class="text-muted">
+                Quickly add popular grocery stores to your account. You currently have 
+                <strong>{{ existing_count }}</strong> stores in your database out of 
+                <strong>{{ available_count }}</strong> available stores.
+            </p>
+            <div class="alert alert-info">
+                <div class="d-flex align-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" class="mr-2">
+                        <path fill="none" d="M0 0h24v24H0z"/>
+                        <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM11 7h2v2h-2V7zm0 4h2v6h-2v-6z" fill="currentColor"/>
+                    </svg>
+                    <span>Select the stores you want to add, then click "Add Selected Stores" at the bottom of the page.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stores List -->
+    <form method="post" action="{% url 'groceries:populate_stores' %}" id="store-form">
+        {% csrf_token %}
+        
+        <!-- Options Card -->
+        <div class="card options-card">
+            <div class="card-header">
+                <h3 class="card-title h5 mb-0">Options</h3>
+            </div>
+            <div class="card-body">
+                <div class="option-group">
+                    <label class="option-label" for="family-select">Associate stores with:</label>
+                    <select id="family-select" name="family" class="form-control">
+                        <option value="">All families</option>
+                        {% for family in families %}
+                        <option value="{{ family.id }}">{{ family.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="option-description">Choose a specific family or leave blank to associate with all families</div>
+                </div>
+                
+                <div class="option-group">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="skip-logos" name="skip_logos">
+                        <label class="form-check-label" for="skip-logos">
+                            Skip downloading store logos
+                        </label>
+                    </div>
+                    <div class="option-description">Enable this if you're having issues with logo downloads</div>
+                </div>
+
+                <div class="option-group">
+                    <label class="option-label">Delete existing stores:</label>
+                    <form id="delete-stores-form" method="post" action="{% url 'groceries:delete_all_stores' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash mr-1" viewBox="0 0 16 16">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                            </svg>
+                            Delete All Existing Stores
+                        </button>
+                    </form>
+                    <div class="option-description option-warning mt-2">Warning: This will permanently delete all existing stores including locations and other associated data</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Store Selection -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title h5 mb-0">Available Stores</h3>
+            </div>
+            <div class="card-body">
+                <div class="store-filters">
+                    <div class="store-filter-count">
+                        {{ stores|length }} stores available
+                    </div>
+                    <div class="store-actions">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="select-all">Select All</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="deselect-all">Deselect All</button>
+                    </div>
+                </div>
+                
+                <div class="store-grid">
+                    {% for store in stores %}
+                    <div class="store-card {% if store.is_existing %}store-existing{% endif %}">
+                        <div class="store-card-checkbox">
+                            <input type="checkbox"
+                                id="store-{{ forloop.counter }}"
+                                name="selected_stores"
+                                value="{{ store.name }}"
+                                class="store-checkbox"
+                                {% if store.is_existing %}disabled{% endif %}>
+                        </div>
+                        <div class="store-card-logo">
+                            {% if store.logo_url %}
+                            <img src="{{ store.logo_url }}" alt="{{ store.name }} Logo" onerror="this.src='{% static 'icons/logo.svg' %}'">
+                            {% else %}
+                            <img src="{% static 'icons/logo.svg' %}" alt="Default Logo">
+                            {% endif %}
+                        </div>
+                        <div class="store-card-content">
+                            <div class="store-card-name">{{ store.name }}</div>
+                            {% if store.website %}
+                            <div class="store-card-website">
+                                <a href="{{ store.website }}" target="_blank" rel="noopener noreferrer">{{ store.website }}</a>
+                            </div>
+                            {% endif %}
+                            {% if store.is_existing %}
+                            <div class="mt-auto">
+                                <span class="badge-existing">Already Added</span>
+                            </div>
+                            {% else %}
+                            <div class="store-card-checkbox-label">
+                                <label for="store-{{ forloop.counter }}" class="checkbox-label">
+                                    Select this store
+                                </label>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Hidden debug field -->
+                        <input type="hidden" name="store_debug_{{ forloop.counter }}" value="{{ store.name }}">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Submit Button -->
+        <div class="form-actions">
+            <div class="mb-3">
+                <button type="button" id="manual-submit-btn" class="btn btn-primary btn-lg btn-block">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" class="mr-2">
+                        <path fill="none" d="M0 0h24v24H0z"/>
+                        <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                    </svg>
+                    Add Selected Stores (Manual Submit)
+                </button>
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" id="add-stores-button" class="btn btn-outline-primary btn-lg btn-block">
+                    Add Selected Stores (Standard Submit)
+                </button>
+            </div>
+
+            <div>
+                <noscript>
+                    <p class="text-warning">JavaScript is disabled. Click the button below to submit:</p>
+                    <button type="submit" class="btn btn-warning btn-lg btn-block">Add Selected Stores (No JavaScript)</button>
+                </noscript>
+            </div>
+
+            <!-- Hidden debug fields -->
+            <input type="hidden" name="debug_timestamp" value="{% now 'U' %}">
+            <input type="hidden" name="form_action" value="populate_stores">
+            <input type="hidden" name="submit_count" id="submit_count" value="0">
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM fully loaded, initializing store population form");
+
+        // Debug form submission
+        window.addEventListener('submit', function(e) {
+            console.log('Form submitted:', e.target.id);
+        });
+
+        // Make the entire card clickable to toggle checkbox
+        const storeCards = document.querySelectorAll('.store-card:not(.store-existing)');
+        console.log(`Found ${storeCards.length} non-disabled store cards`);
+
+        storeCards.forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Ignore clicks on links and the checkbox itself
+                if (e.target.tagName !== 'A' && !e.target.classList.contains('store-checkbox')) {
+                    const checkbox = this.querySelector('.store-checkbox');
+                    checkbox.checked = !checkbox.checked;
+                    console.log(`Toggled checkbox for ${this.querySelector('.store-card-name').textContent}: ${checkbox.checked}`);
+                }
+            });
+        });
+        
+        // Select/Deselect all buttons
+        const selectAllBtn = document.getElementById('select-all');
+        const deselectAllBtn = document.getElementById('deselect-all');
+        const storeCheckboxes = document.querySelectorAll('.store-checkbox:not(:disabled)');
+        
+        selectAllBtn.addEventListener('click', function() {
+            storeCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        });
+        
+        deselectAllBtn.addEventListener('click', function() {
+            storeCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+        
+
+        // Handle delete confirmation on form submit
+        const deleteStoresForm = document.getElementById('delete-stores-form');
+
+        // Check if delete stores form exists before adding event listener
+        if (deleteStoresForm) {
+            deleteStoresForm.addEventListener('submit', function(e) {
+                const confirmed = confirm('WARNING: This will permanently delete ALL existing stores and their locations. This action cannot be undone. Are you sure?');
+                if (!confirmed) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // Show loading state on button
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.classList.remove('btn-outline-danger');
+                submitBtn.classList.add('btn-danger');
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span> Deleting stores...';
+
+                return true;
+            });
+        }
+
+        // Form validation for adding stores
+        const storeForm = document.getElementById('store-form');
+        const addStoresBtn = document.getElementById('add-stores-button');
+        const manualSubmitBtn = document.getElementById('manual-submit-btn');
+
+        // Add direct click handler to the manual button
+        manualSubmitBtn.addEventListener('click', function(e) {
+            console.log("Manual submit button clicked");
+            const selectedStores = document.querySelectorAll('.store-checkbox:checked');
+            console.log(`${selectedStores.length} stores selected:`,
+                Array.from(selectedStores).map(cb => cb.value));
+
+            if (selectedStores.length === 0) {
+                alert('Please select at least one store');
+                return false;
+            }
+
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span> Adding stores...';
+
+            try {
+                // Create a direct POST request with fetch
+                const formData = new FormData(storeForm);
+
+                console.log("Form data entries:");
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
+
+                // Add debug info
+                formData.append('manual_submit', 'true');
+
+                fetch(storeForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    console.log("Response received:", response.status);
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        response.text().then(text => {
+                            console.log("Response text first 100 chars:", text.substring(0, 100));
+                            window.location.href = "{% url 'groceries:stores' %}";
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error("Error submitting form:", error);
+                    alert("Error submitting form: " + error.message);
+                    this.disabled = false;
+                    this.innerHTML = 'Try again';
+                });
+            } catch (error) {
+                console.error("Error in submit handler:", error);
+                alert("Error: " + error.message);
+                this.disabled = false;
+            }
+        });
+
+        // Add direct click handler to the regular submit button
+        addStoresBtn.addEventListener('click', function(e) {
+            console.log("Regular submit button clicked");
+            const selectedStores = document.querySelectorAll('.store-checkbox:checked');
+            console.log(`${selectedStores.length} stores selected`);
+
+            if (selectedStores.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one store');
+                return false;
+            }
+
+            // Increment the submit counter
+            const submitCounter = document.getElementById('submit_count');
+            submitCounter.value = parseInt(submitCounter.value || 0) + 1;
+            console.log(`Submit attempt #${submitCounter.value}`);
+
+            // Show loading state on the button
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span> Adding stores...';
+
+            // Log the form data being submitted
+            console.log("Submitting form with selected stores:",
+                Array.from(selectedStores).map(cb => cb.value).join(', '));
+
+            // Don't prevent the default action - let the form submit naturally
+            return true;
+        });
+
+        // Add the regular form handler as well
+        storeForm.addEventListener('submit', function(e) {
+            console.log("Form submit event fired");
+            // Check if at least one store is selected
+            const selectedStores = document.querySelectorAll('.store-checkbox:checked');
+            if (selectedStores.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one store');
+                return false;
+            }
+
+            // Log form data for debugging
+            const formData = new FormData(this);
+            console.log("Form data in submit event:");
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+
+            console.log("Form submission continuing...");
+            return true;
+        });
+    });
+</script>
+{% endblock %}

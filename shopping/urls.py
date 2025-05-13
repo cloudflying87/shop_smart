@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .store_utils_view import StorePopulationView, delete_all_stores, delete_store
 
 app_name = 'groceries'
 
@@ -51,8 +52,11 @@ urlpatterns = [
     # Stores
     path('stores/', views.StoreListView.as_view(), name='stores'),
     path('stores/create/', views.StoreCreateView.as_view(), name='create_store'),
+    path('stores/populate/', StorePopulationView.as_view(), name='populate_stores'),
+    path('stores/delete-all/', delete_all_stores, name='delete_all_stores'),
     path('stores/<int:pk>/', views.StoreDetailView.as_view(), name='store_detail'),
     path('stores/<int:pk>/edit/', views.StoreUpdateView.as_view(), name='edit_store'),
+    path('stores/<int:pk>/delete/', delete_store, name='delete_store'),
     
     # Store Locations
     path('stores/<int:store_id>/locations/add/', views.AddStoreLocationView.as_view(), name='add_location'),

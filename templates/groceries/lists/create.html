@@ -58,13 +58,26 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Auto-populate list name with current date if the field is empty
+        // Auto-populate list name with current date and/or store name
         const nameInput = document.getElementById('id_name');
+        const storeSelect = document.getElementById('id_store');
+        const now = new Date();
+        const options = { weekday: 'long', month: 'short', day: 'numeric' };
+        const formattedDate = now.toLocaleDateString('en-US', options);
+        
+        // Function to generate list name based on store selection
+        function generateListName() {
+            const storeName = storeSelect.options[storeSelect.selectedIndex].text;
+            if (storeName && storeName !== '---------') {
+                return `${storeName} List - ${formattedDate}`;
+            } else {
+                return `Shopping List - ${formattedDate}`;
+            }
+        }
+        
+        // Set initial name if empty
         if (!nameInput.value) {
-            const now = new Date();
-            const options = { weekday: 'long', month: 'short', day: 'numeric' };
-            const formattedDate = now.toLocaleDateString('en-US', options);
-            nameInput.value = `Shopping List - ${formattedDate}`;
+            nameInput.value = generateListName();
         }
 
         // Show template list selector only when a family is selected
@@ -105,15 +118,8 @@
         familySelect.addEventListener('change', updateTemplateListVisibility);
 
         // Update list name with store name when store is selected
-        const storeSelect = document.getElementById('id_store');
         storeSelect.addEventListener('change', function() {
-            const storeName = storeSelect.options[storeSelect.selectedIndex].text;
-            if (storeName && storeName !== '---------') {
-                const now = new Date();
-                const options = { weekday: 'long', month: 'short', day: 'numeric' };
-                const formattedDate = now.toLocaleDateString('en-US', options);
-                nameInput.value = `${storeName} - ${formattedDate}`;
-            }
+            nameInput.value = generateListName();
         });
     });
 </script>

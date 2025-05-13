@@ -112,7 +112,7 @@ body {
 
 /* ========== Main Content Area ========== */
 .app-content {
-  padding: calc(var(--header-height) + var(--space-md)) var(--space-md) calc(var(--bottom-nav-height) + var(--space-md) + var(--safe-area-inset-bottom));
+  padding: calc(var(--header-height) + var(--space-md)) var(--space-md) calc(var(--bottom-nav-height) + var(--space-xxl) + var(--safe-area-inset-bottom));
   max-width: 100%;
   margin: 0 auto;
   min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
@@ -175,7 +175,14 @@ body {
   transform: translateX(-50%);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   border: none;
-  z-index: 1;
+  z-index: 95; /* Higher z-index to ensure it's above other content */
+  transition: transform 0.3s ease;
+}
+
+/* Add shadow effect and move the FAB when user scrolls near bottom */
+.bottom-nav.near-bottom .fab {
+  transform: translateX(-50%) translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
 .fab svg {
@@ -499,6 +506,16 @@ body {
 
 .btn {
   min-height: var(--touch-target-size);
+}
+
+.form-actions {
+  position: sticky;
+  bottom: 0;
+  background-color: var(--bg-primary);
+  padding: 1rem 0 calc(var(--bottom-nav-height) + 1rem);
+  margin-top: 1rem;
+  z-index: 100;
+  border-top: 1px solid var(--border-light);
 }
 
 /* ========== Offline Indicator ========== */

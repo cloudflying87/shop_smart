@@ -5,6 +5,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import F, Count, Q
+from django.db import IntegrityError
+from django.utils.text import slugify
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, View
 )
@@ -26,6 +28,9 @@ from .store_utils import (
     create_default_store_locations, get_common_store_data,
     search_store_info, save_store_logo_from_url
 )
+
+# Import our local view modules
+# These imports must be at the bottom to avoid circular imports
 
 # Import category-based item selection views
 from .views_category import CategoryItemSelectionView, AddMultipleItemsView
@@ -179,6 +184,39 @@ class ShoppingListCreateView(LoginRequiredMixin, CreateView):
     form_class = ShoppingListForm
     template_name = 'groceries/lists/create.html'
     
+    def get_initial(self):
+        initial = super().get_initial()
+        
+        # Get store from query parameter if provided
+        store_id = self.request.GET.get('store')
+        if store_id:
+            try:
+                store = GroceryStore.objects.get(
+                    id=store_id, 
+                    families__members__user=self.request.user
+                )
+                initial['store'] = store.id
+            except GroceryStore.DoesNotExist:
+                pass
+                
+        # Get or set default family
+        try:
+            user_profile = self.request.user.profile
+            if user_profile.default_family:
+                initial['family'] = user_profile.default_family.id
+        except (AttributeError, UserProfile.DoesNotExist):
+            # If no default family, try to get first family the user belongs to
+            try:
+                first_family = Family.objects.filter(
+                    members__user=self.request.user
+                ).first()
+                if first_family:
+                    initial['family'] = first_family.id
+            except Exception:
+                pass
+                
+        return initial
+    
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
@@ -234,6 +272,20 @@ class ShoppingListCreateView(LoginRequiredMixin, CreateView):
         context['recent_lists'] = ShoppingList.objects.filter(
             family__in=context['families']
         ).order_by('-created_at')[:10]
+        
+        # Add the store and family name to the context for custom display
+        store_id = self.request.GET.get('store')
+        if store_id:
+            try:
+                store = GroceryStore.objects.get(id=store_id)
+                context['selected_store'] = store
+                
+                # Pre-populate list name with store name in context
+                from datetime import datetime
+                today = datetime.now().strftime("%A, %b %d")
+                context['initial_list_name'] = f"{store.name} List - {today}"
+            except GroceryStore.DoesNotExist:
+                pass
         
         return context
 
@@ -705,40 +757,66 @@ class StoreCreateView(LoginRequiredMixin, CreateView):
         # Check if we have a logo_url in the request
         logo_url = self.request.POST.get('logo_url', '')
 
-        # Save the model first
-        response = super().form_valid(form)
+        try:
+            # Save the model first
+            response = super().form_valid(form)
 
-        # Add this store to the user's families
-        family_ids = self.request.POST.getlist('families[]')
+            # Add this store to the user's families
+            family_ids = self.request.POST.getlist('families[]')
 
-        # If we didn't get any values with families[], try the standard name
-        if not family_ids:
-            family_ids = self.request.POST.getlist('families')
+            # If we didn't get any values with families[], try the standard name
+            if not family_ids:
+                family_ids = self.request.POST.getlist('families')
 
-        # Convert string IDs to integers
-        family_ids = [int(id) for id in family_ids if id.isdigit()]
+            # Convert string IDs to integers
+            family_ids = [int(id) for id in family_ids if id.isdigit()]
 
-        families = Family.objects.filter(
-            id__in=family_ids,
-            members__user=self.request.user
-        )
+            families = Family.objects.filter(
+                id__in=family_ids,
+                members__user=self.request.user
+            )
 
-        if families:
-            self.object.families.add(*families)
+            if families:
+                self.object.families.add(*families)
 
-        # Download and save logo if a URL was provided and no logo was uploaded
-        if logo_url and not self.object.logo:
-            save_store_logo_from_url(self.object, logo_url)
+            # Download and save logo if a URL was provided and no logo was uploaded
+            if logo_url and not self.object.logo:
+                save_store_logo_from_url(self.object, logo_url)
 
-        # Create default store locations
-        locations = create_default_store_locations(self.object)
+            # Create default store locations
+            locations = create_default_store_locations(self.object)
 
-        messages.success(
-            self.request,
-            f'Store "{form.instance.name}" created successfully with {len(locations)} default store locations. '
-            f'You can customize them in the store details page.'
-        )
-        return response
+            messages.success(
+                self.request,
+                f'Store "{form.instance.name}" created successfully with {len(locations)} default store locations. '
+                f'You can customize them in the store details page.'
+            )
+            return response
+            
+        except IntegrityError as e:
+            # Handle duplicate slug error
+            if 'duplicate key value violates unique constraint' in str(e) and 'slug' in str(e):
+                # Get store that caused conflict
+                existing_slug = slugify(form.instance.name)
+                try:
+                    existing_store = GroceryStore.objects.get(slug=existing_slug)
+                    messages.error(
+                        self.request,
+                        f'A store with the name "{existing_store.name}" already exists. '
+                        f'Please use a different name or edit the existing store.'
+                    )
+                except GroceryStore.DoesNotExist:
+                    # General error message if we can't find the specific store
+                    messages.error(
+                        self.request,
+                        f'A store with a similar name already exists. Please use a different name.'
+                    )
+                
+                # Return to form with errors
+                return self.form_invalid(form)
+            else:
+                # Re-raise the exception for other IntegrityErrors
+                raise
     
     def get_success_url(self):
         return reverse('groceries:store_detail', kwargs={'pk': self.object.pk})
@@ -830,9 +908,23 @@ class GroceryItemSearchView(LoginRequiredMixin, View):
         family_id = request.GET.get('family')
         store_id = request.GET.get('store')
         query = request.GET.get('query', '').strip()
-        
+
+        # If no family_id specified, try to use the user's default family
         if not family_id:
-            return JsonResponse({'error': 'Family ID is required'}, status=400)
+            try:
+                user_profile = request.user.profile
+                if user_profile.default_family:
+                    family_id = user_profile.default_family.id
+                else:
+                    # Get the first family user belongs to
+                    family_membership = request.user.family_memberships.first()
+                    if family_membership:
+                        family_id = family_membership.family.id
+            except Exception as e:
+                print(f"Error getting default family: {e}")
+
+        if not family_id:
+            return JsonResponse({'error': 'Family ID is required. Please set a default family in your profile.'}, status=400)
         
         try:
             family = Family.objects.get(id=family_id)
@@ -1165,29 +1257,67 @@ class RemoveFamilyMemberView(LoginRequiredMixin, View):
             return redirect('groceries:family_detail', pk=family.id)
 
 class UpdateThemeView(LoginRequiredMixin, View):
-    """API endpoint to update user theme preference"""
+    """API endpoint to update user theme preference and default family"""
 
     def post(self, request):
         try:
-            dark_mode = request.POST.get('dark_mode') == 'true'
+            # Process dark mode update
+            if 'dark_mode' in request.POST:
+                dark_mode = request.POST.get('dark_mode') == 'true'
 
-            # Get or create user profile
-            profile, created = UserProfile.objects.get_or_create(user=request.user)
+                # Get or create user profile
+                profile, created = UserProfile.objects.get_or_create(user=request.user)
 
-            # Update theme preference
-            profile.dark_mode = dark_mode
-            profile.save(update_fields=['dark_mode'])
+                # Update theme preference
+                profile.dark_mode = dark_mode
+                profile.save(update_fields=['dark_mode'])
 
-            return JsonResponse({
-                'success': True,
-                'dark_mode': dark_mode
-            })
+                return JsonResponse({
+                    'success': True,
+                    'dark_mode': dark_mode
+                })
+                
+            # Process default family update
+            elif 'default_family' in request.POST:
+                family_id = request.POST.get('default_family')
+                
+                try:
+                    # Verify this family exists and user is a member
+                    family = Family.objects.get(
+                        id=family_id,
+                        members__user=request.user
+                    )
+                    
+                    # Update profile with new default family
+                    profile, created = UserProfile.objects.get_or_create(user=request.user)
+                    profile.default_family = family
+                    profile.save(update_fields=['default_family'])
+                    
+                    messages.success(request, f'"{family.name}" set as your default family')
+                    
+                    # Redirect back to families page
+                    return redirect('groceries:family')
+                
+                except Family.DoesNotExist:
+                    messages.error(request, "That family doesn't exist or you don't have access to it")
+                    return redirect('groceries:family')
+            
+            # No valid action found
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No valid action specified'
+                }, status=400)
 
         except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=500)
+            if 'default_family' in request.POST:
+                messages.error(request, f"Error setting default family: {str(e)}")
+                return redirect('groceries:family')
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=500)
 
 class StoreSearchView(LoginRequiredMixin, View):
     """API endpoint to search for store information"""
@@ -1569,6 +1699,8 @@ class UserRegistrationView(CreateView):
         profile = self.object.profile
         profile.default_family = family
         profile.save()
-        
+
         messages.success(self.request, "Your account has been created successfully! You can now log in.")
         return response
+
+# We'll import store_utils in shop_smart/urls.py directly to avoid circular imports

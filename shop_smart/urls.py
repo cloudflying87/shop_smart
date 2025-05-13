@@ -5,9 +5,18 @@ from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from shopping import views
 
+# Create a simple landing view function here to avoid circular imports
+from django.shortcuts import render, redirect
+
+def landing_view(request):
+    """Simple landing view that redirects authenticated users to dashboard"""
+    if request.user.is_authenticated:
+        return redirect('groceries:dashboard')
+    return render(request, 'landing.html')
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.LandingPageView.as_view(), name='landing'),
+    path('', landing_view, name='landing'),
     path('app/', include('shopping.urls')),
     
     # API endpoints that need to be at the root level
