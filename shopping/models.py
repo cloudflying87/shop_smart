@@ -61,7 +61,8 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     default_family = models.ForeignKey(Family, on_delete=models.SET_NULL, null=True, blank=True, related_name='default_for_users')
     dark_mode = models.BooleanField(default=False)
-    
+    show_categories = models.BooleanField(default=True, help_text="Show items grouped by categories in shopping lists")
+
     def __str__(self):
         return f"Profile for {self.user.username}"
 

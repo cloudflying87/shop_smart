@@ -251,54 +251,78 @@ class ShoppingListDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         shopping_list = self.object
-        
+
         # Get list items organized by store location and checked status
         list_items = shopping_list.items.select_related(
             'item', 'item__category'
         ).order_by(
-            'checked', 
+            'checked',
             F('item__store_info__location__sort_order').asc(nulls_last=True),
             'sort_order',
             'item__name'
         )
-        
-        # Organize items by location
+
+        # Get user preference for showing categories
+        show_categories = True  # Default if not logged in or no profile
+        if self.request.user.is_authenticated:
+            try:
+                profile = self.request.user.profile
+                show_categories = profile.show_categories
+            except UserProfile.DoesNotExist:
+                pass
+
+        # Initialize context variables
         locations = {}
         uncategorized_items = []
-        
-        for item in list_items:
-            # Try to get location for this item in this store
-            try:
-                item_store_info = ItemStoreInfo.objects.get(
-                    item=item.item, 
-                    store=shopping_list.store
-                )
-                location = item_store_info.location
-                if location:
-                    if location not in locations:
-                        locations[location] = []
-                    locations[location].append(item)
-                else:
+        all_items = []  # For non-categorized view
+
+        # Either organize by category or provide a flat list based on user preference
+        if show_categories:
+            # Organize items by location
+            for item in list_items:
+                # Try to get location for this item in this store
+                try:
+                    item_store_info = ItemStoreInfo.objects.get(
+                        item=item.item,
+                        store=shopping_list.store
+                    )
+                    location = item_store_info.location
+                    if location:
+                        if location not in locations:
+                            locations[location] = []
+                        locations[location].append(item)
+                    else:
+                        uncategorized_items.append(item)
+                except ItemStoreInfo.DoesNotExist:
                     uncategorized_items.append(item)
-            except ItemStoreInfo.DoesNotExist:
-                uncategorized_items.append(item)
-        
+        else:
+            # Just pass all items as a flat list
+            all_items = list(list_items)
+
         # Get recommendations for this list
         try:
             recommended_items = ShoppingRecommender.get_recommendations_based_on_list(
                 shopping_list, limit=8
             )
         except Exception as e:
-            logger.error(f"Error getting recommendations: {str(e)}")
+            # Use a default empty list if an error occurs
             recommended_items = []
-        
+            # The logger variable might not be defined - handle safely
+            try:
+                logger.error(f"Error getting recommendations: {str(e)}")
+            except NameError:
+                print(f"Error getting recommendations: {str(e)}")
+
+        # Add all variables to context
+        context['show_categories'] = show_categories
         context['locations'] = locations
         context['uncategorized_items'] = uncategorized_items
+        context['all_items'] = all_items  # Add the flat list for non-categorized view
         context['recommended_items'] = recommended_items
         context['total_items'] = list_items.count()
         context['checked_items'] = list_items.filter(checked=True).count()
-        context['list_items'] = list_items  # Add list_items to context
-        
+        context['list_items'] = list_items  # Original queryset for reference
+
         return context
 
 class ShoppingListUpdateView(LoginRequiredMixin, UpdateView):
@@ -891,7 +915,7 @@ class UserProfileView(LoginRequiredMixin, DetailView):
 
 class UserProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = UserProfile
-    fields = ['default_family', 'dark_mode']
+    fields = ['default_family', 'dark_mode', 'show_categories']
     template_name = 'groceries/profile/edit.html'
     context_object_name = 'profile'
     success_url = reverse_lazy('groceries:profile')

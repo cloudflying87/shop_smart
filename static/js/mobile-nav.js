@@ -406,32 +406,43 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(data => {
       console.log('Item status updated:', data);
 
-      // Move checked item to the bottom of its location section
+      // Move checked item to the bottom of its list
       if (isChecked) {
-        const locationSection = listItem.closest('.location-section');
-        if (locationSection) {
-          // The HTML template uses ul.list-items as the class for the list container
-          const listContainer = locationSection.querySelector('.card ul');
-          if (listContainer) {
-            // Add a small delay to let the checkbox animation complete
-            setTimeout(() => {
-              // Apply transition effect
-              listItem.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-              listItem.style.opacity = '0.5';
-              listItem.style.transform = 'translateX(10px)';
+        // First, try to find the flat list view container for non-categorized mode
+        let listContainer;
+        const flatList = document.getElementById('flat-list');
 
-              setTimeout(() => {
-                // Move the item to the end of its list
-                listContainer.appendChild(listItem);
-
-                // Restore visibility with animation
-                setTimeout(() => {
-                  listItem.style.opacity = '1';
-                  listItem.style.transform = 'translateX(0)';
-                }, 50);
-              }, 300);
-            }, 100);
+        if (flatList) {
+          // We're in flat list view mode
+          listContainer = flatList;
+        } else {
+          // We're in categorized view mode, so find the parent location section
+          const locationSection = listItem.closest('.location-section');
+          if (locationSection) {
+            listContainer = locationSection.querySelector('.card ul');
           }
+        }
+
+        // If we found a valid list container, move the item
+        if (listContainer) {
+          // Add a small delay to let the checkbox animation complete
+          setTimeout(() => {
+            // Apply transition effect
+            listItem.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            listItem.style.opacity = '0.5';
+            listItem.style.transform = 'translateX(10px)';
+
+            setTimeout(() => {
+              // Move the item to the end of its list
+              listContainer.appendChild(listItem);
+
+              // Restore visibility with animation
+              setTimeout(() => {
+                listItem.style.opacity = '1';
+                listItem.style.transform = 'translateX(0)';
+              }, 50);
+            }, 300);
+          }, 100);
         }
       }
 
