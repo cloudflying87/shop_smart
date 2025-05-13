@@ -83,6 +83,26 @@
                         </div>
                     </div>
                 </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3 class="setting-name">Show Categories in Shopping Lists</h3>
+                        <p class="setting-description">Group items by store section in your shopping lists</p>
+                    </div>
+                    <div class="setting-value">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="showCategoriesToggle" {% if profile.show_categories %}checked{% endif %} disabled>
+                            <label class="custom-control-label" for="showCategoriesToggle"></label>
+                        </div>
+                        <div class="setting-status">
+                            {% if profile.show_categories %}
+                            <span class="badge badge-success">Enabled</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Disabled</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

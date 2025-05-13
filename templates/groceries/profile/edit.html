@@ -36,6 +36,16 @@
                     </div>
                 </div>
                 
+                <div class="form-section">
+                    <h3 class="section-title">Shopping Lists</h3>
+                    <p class="section-help">Customize your shopping list experience</p>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            {{ form.show_categories|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                     <a href="{% url 'groceries:profile' %}" class="btn btn-outline">Cancel</a>

@@ -27,6 +27,9 @@ urlpatterns = [
     path('lists/<int:list_id>/items/add-multiple/', views.AddMultipleItemsView.as_view(), name='add_multiple_items'),
     path('lists/<int:list_id>/items/<int:item_id>/toggle/', views.ToggleListItemView.as_view(), name='toggle_list_item'),
     path('lists/<int:list_id>/items/<int:item_id>/price/', views.UpdateListItemPriceView.as_view(), name='update_item_price'),
+    path('lists/<int:list_id>/items/<int:item_id>/location/', views.UpdateListItemLocationView.as_view(), name='update_item_location'),
+    path('lists/<int:list_id>/items/<int:item_id>/quantity/', views.UpdateListItemQuantityView.as_view(), name='update_item_quantity'),
+    path('lists/<int:list_id>/items/<int:item_id>/note/', views.UpdateListItemNoteView.as_view(), name='update_item_note'),
     path('lists/<int:list_id>/items/<int:item_id>/remove/', views.RemoveListItemView.as_view(), name='remove_list_item'),
     
     # Grocery Items
@@ -71,4 +74,5 @@ urlpatterns = [
     path('profile/', views.UserProfileView.as_view(), name='profile'),
     path('profile/edit/', views.UserProfileUpdateView.as_view(), name='edit_profile'),
     path('profile/theme/', views.UpdateThemeView.as_view(), name='update_theme'),
+    path('profile/toggle-categories/', views.ToggleCategoriesView.as_view(), name='toggle_categories'),
 ]

@@ -149,6 +149,8 @@ body {
   flex: 1;
   height: 100%;
   transition: color 0.2s;
+  position: relative;
+  z-index: 96; /* Higher than FAB to ensure clickability */
 }
 
 .bottom-nav-link span {
@@ -158,6 +160,13 @@ body {
 
 .bottom-nav-link.active {
   color: var(--primary);
+}
+
+.fab-container {
+  position: relative;
+  width: 56px;
+  height: var(--bottom-nav-height);
+  z-index: 94; /* Lower than regular links */
 }
 
 .fab {
@@ -171,17 +180,16 @@ body {
   justify-content: center;
   position: absolute;
   top: -28px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   border: none;
-  z-index: 95; /* Higher z-index to ensure it's above other content */
+  z-index: 95;
   transition: transform 0.3s ease;
 }
 
 /* Add shadow effect and move the FAB when user scrolls near bottom */
 .bottom-nav.near-bottom .fab {
-  transform: translateX(-50%) translateY(-10px);
+  transform: translateY(-10px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
@@ -415,6 +423,144 @@ body {
   cursor: pointer;
 }
 
+/* ========== Mode Toggle Styles ========== */
+.mode-toggle-container {
+    display: flex;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 4px;
+    margin: 10px 0;
+}
+
+.mode-toggle-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.mode-toggle-btn svg {
+    margin-right: 6px;
+}
+
+.mode-toggle-btn.active {
+    background-color: var(--bg-primary);
+    color: var(--primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* List header styles for mobile view */
+.list-header-mobile {
+    background-color: var(--bg-primary);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-list-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.list-title {
+    font-size: 0.95rem;
+    margin: 0;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%;
+}
+
+.list-meta-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.progress-count {
+    font-weight: 500;
+}
+
+.list-progress {
+    margin-top: 10px;
+}
+
+.mode-content {
+    margin-bottom: 16px;
+}
+
+.search-container {
+    background-color: var(--bg-primary);
+    border-radius: 10px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+}
+
+.item-search-form {
+    margin-bottom: 12px;
+}
+
+.list-actions-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.category-browse-link {
+    flex: 1;
+}
+
+.category-toggle-container {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* ========== Quantity Controls ========== */
+.quantity-control {
+    display: flex;
+    align-items: center;
+    margin-right: var(--space-md);
+}
+
+.quantity-btn {
+    background-color: var(--bg-secondary);
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    padding: 0;
+}
+
+.quantity-btn:active {
+    background-color: var(--border-medium);
+}
+
+.item-quantity {
+    margin: 0 6px;
+    min-width: 40px;
+    text-align: center;
+}
+
 /* ========== Item Recommendations ========== */
 .recommendations {
   margin-top: var(--space-lg);
@@ -582,12 +728,42 @@ body {
   transition: transform 0.2s;
 }
 
+/* ========== Products List Mobile Styles ========== */
+@media (max-width: 767px) {
+  /* Hide text on mobile for product action buttons */
+  .item-actions .action-text {
+    display: none;
+  }
+  
+  /* Make buttons more compact on mobile */
+  .item-actions .btn {
+    padding: 6px;
+    margin-right: 4px;
+  }
+  
+  /* Make icons slightly larger for better touch targets */
+  .item-actions svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  /* More space for item info */
+  .item-info {
+    flex: 1;
+    padding-right: 8px;
+  }
+}
+
 /* ========== Media Queries ========== */
 @media (min-width: 768px) {
   /* Tablet and larger adjustments */
   .app-content {
     max-width: 768px;
     margin: 0 auto;
+  }
+  
+  .fab-container {
+    width: 64px;
   }
   
   .fab {

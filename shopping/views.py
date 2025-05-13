@@ -374,6 +374,7 @@ class ShoppingListDetailView(LoginRequiredMixin, DetailView):
         context['total_items'] = list_items.count()
         context['checked_items'] = list_items.filter(checked=True).count()
         context['list_items'] = list_items  # Original queryset for reference
+        context['store_locations'] = StoreLocation.objects.filter(store=shopping_list.store).order_by('sort_order')
 
         return context
 
@@ -613,6 +614,105 @@ class UpdateListItemPriceView(LoginRequiredMixin, View):
         except ValueError:
             return JsonResponse({'error': 'Invalid price'}, status=400)
 
+class UpdateListItemLocationView(LoginRequiredMixin, View):
+    """Update a list item's location"""
+    
+    def post(self, request, list_id, item_id):
+        # Get the list item and verify permissions
+        list_item = get_object_or_404(
+            ShoppingListItem.objects.filter(
+                shopping_list__family__members__user=request.user,
+                shopping_list_id=list_id
+            ),
+            pk=item_id
+        )
+        
+        try:
+            location_id = request.POST.get('location_id')
+            
+            # Get the store info for this item in this store
+            store_info, created = ItemStoreInfo.objects.get_or_create(
+                item=list_item.item,
+                store=list_item.shopping_list.store
+            )
+            
+            # Update the location
+            if location_id:
+                location = StoreLocation.objects.get(
+                    id=location_id,
+                    store=list_item.shopping_list.store
+                )
+                store_info.location = location
+            else:
+                store_info.location = None
+                
+            store_info.save()
+            
+            return JsonResponse({
+                'success': True,
+                'location_id': location_id,
+                'location_name': location.name if location_id else 'None'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+class UpdateListItemQuantityView(LoginRequiredMixin, View):
+    """Update a list item's quantity"""
+    
+    def post(self, request, list_id, item_id):
+        # Get the list item and verify permissions
+        list_item = get_object_or_404(
+            ShoppingListItem.objects.filter(
+                shopping_list__family__members__user=request.user,
+                shopping_list_id=list_id
+            ),
+            pk=item_id
+        )
+        
+        try:
+            quantity = float(request.POST.get('quantity', 1))
+            
+            # Update item quantity
+            list_item.quantity = quantity
+            list_item.save()
+            
+            return JsonResponse({
+                'success': True,
+                'quantity': quantity
+            })
+            
+        except ValueError:
+            return JsonResponse({'error': 'Invalid quantity'}, status=400)
+            
+class UpdateListItemNoteView(LoginRequiredMixin, View):
+    """Update a list item's note"""
+    
+    def post(self, request, list_id, item_id):
+        # Get the list item and verify permissions
+        list_item = get_object_or_404(
+            ShoppingListItem.objects.filter(
+                shopping_list__family__members__user=request.user,
+                shopping_list_id=list_id
+            ),
+            pk=item_id
+        )
+        
+        try:
+            note = request.POST.get('note', '')
+            
+            # Update item note
+            list_item.note = note
+            list_item.save()
+            
+            return JsonResponse({
+                'success': True,
+                'note': note
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+            
 class RemoveListItemView(LoginRequiredMixin, View):
     """Remove an item from a shopping list"""
     
@@ -1007,7 +1107,7 @@ class UserProfileView(LoginRequiredMixin, DetailView):
 
 class UserProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = UserProfile
-    fields = ['default_family', 'dark_mode', 'show_categories']
+    form_class = UserProfileForm
     template_name = 'groceries/profile/edit.html'
     context_object_name = 'profile'
     success_url = reverse_lazy('groceries:profile')
@@ -1017,15 +1117,10 @@ class UserProfileUpdateView(LoginRequiredMixin, UpdateView):
         profile, created = UserProfile.objects.get_or_create(user=self.request.user)
         return profile
     
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        
-        # Limit default_family choices to user's families
-        form.fields['default_family'].queryset = Family.objects.filter(
-            members__user=self.request.user
-        )
-        
-        return form
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
     
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -1255,6 +1350,34 @@ class RemoveFamilyMemberView(LoginRequiredMixin, View):
         except Exception as e:
             messages.error(request, f'Error removing member: {str(e)}')
             return redirect('groceries:family_detail', pk=family.id)
+
+class ToggleCategoriesView(LoginRequiredMixin, View):
+    """API endpoint to toggle categories display in shopping lists"""
+    
+    def post(self, request):
+        try:
+            # Get data from request body
+            import json
+            data = json.loads(request.body)
+            show_categories = data.get('show_categories', True)
+            
+            # Get or create user profile
+            profile, created = UserProfile.objects.get_or_create(user=request.user)
+            
+            # Update show_categories preference
+            profile.show_categories = show_categories
+            profile.save(update_fields=['show_categories'])
+            
+            return JsonResponse({
+                'success': True,
+                'show_categories': show_categories
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
 
 class UpdateThemeView(LoginRequiredMixin, View):
     """API endpoint to update user theme preference and default family"""

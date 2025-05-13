@@ -283,7 +283,7 @@ class UserProfileForm(forms.ModelForm):
     """Form for editing user profiles"""
     class Meta:
         model = UserProfile
-        fields = ['default_family', 'dark_mode']
+        fields = ['default_family', 'dark_mode', 'show_categories']
     
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
@@ -293,12 +293,17 @@ class UserProfileForm(forms.ModelForm):
             self.fields['default_family'].queryset = Family.objects.filter(
                 members__user=self.user
             ).distinct()
+            
+        # Add field labels and help text
+        self.fields['show_categories'].label = "Show Categories in Shopping Lists"
+        self.fields['show_categories'].help_text = "When enabled, items will be grouped by store section in your shopping lists"
         
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.layout = Layout(
             Field('default_family', wrapper_class='form-group'),
             Field('dark_mode', wrapper_class='form-group'),
+            Field('show_categories', wrapper_class='form-group'),
             Div(
                 Submit('submit', 'Save Changes', css_class='btn btn-primary'),
                 css_class='form-group mt-4'
