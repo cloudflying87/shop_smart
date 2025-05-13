@@ -138,9 +138,9 @@ if [ "$REBUILD" = true ]; then
     echo "Starting containers"
     sudo docker compose up -d 
     echo "Running Django migrations"
-    sudo docker compose -f docker-compose.yaml exec web python manage.py collectstatic --noinput
-    sudo docker compose -f docker-compose.yaml exec web python manage.py makemigrations 
-    sudo docker compose -f docker-compose.yaml exec web python manage.py migrate 
+    sudo docker compose -f docker-compose.yml exec web python manage.py collectstatic --noinput
+    sudo docker compose -f docker-compose.yml exec web python manage.py makemigrations 
+    sudo docker compose -f docker-compose.yml exec web python manage.py migrate 
 fi
 
 # Restore database
