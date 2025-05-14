@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        canvas { border: 1px solid #ccc; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Icon Generator</h1>
+    <div id="original-svg"></div>
+    
+    <h2>Generated Icons:</h2>
+    <div id="icons-container"></div>
+    
+    <script>
+        // SVG content from your logo.svg
+        const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="100" fill="#4A6FFF"/>
+  <path d="M388 176C388 165.5 379.5 157 369 157H143C132.5 157 124 165.5 124 176V336C124 346.5 132.5 355 143 355H369C379.5 355 388 346.5 388 336V176Z" stroke="white" stroke-width="20" stroke-linejoin="round"/>
+  <path d="M388 176L356 144H156L124 176" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M156 256L208 304L356 208" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+        // Display the original SVG
+        document.getElementById('original-svg').innerHTML = svgContent;
+
+        // Icon sizes to generate
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        // Create a container for the icons
+        const iconsContainer = document.getElementById('icons-container');
+        
+        // Create a blob URL for the SVG
+        const blob = new Blob([svgContent], {type: 'image/svg+xml'});
+        const url = URL.createObjectURL(blob);
+        
+        // Load the SVG as an image
+        const img = new Image();
+        img.onload = function() {
+            // Generate icons for each size
+            sizes.forEach(size => {
+                // Create a canvas for this size
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw the image to the canvas, scaled to the proper size
+                ctx.drawImage(img, 0, 0, size, size);
+                
+                // Convert to PNG data URL
+                const pngDataUrl = canvas.toDataURL('image/png');
+                
+                // Create a download link for this icon
+                const downloadLink = document.createElement('a');
+                downloadLink.href = pngDataUrl;
+                downloadLink.download = `icon-${size}x${size}.png`;
+                downloadLink.textContent = `Download ${size}x${size} icon`;
+                
+                // Add the canvas and download link to the page
+                const div = document.createElement('div');
+                div.appendChild(canvas);
+                div.appendChild(downloadLink);
+                iconsContainer.appendChild(div);
+                
+                // Add a break
+                iconsContainer.appendChild(document.createElement('br'));
+            });
+            
+            // Also generate a small favicon
+            const faviconCanvas = document.createElement('canvas');
+            faviconCanvas.width = 32;
+            faviconCanvas.height = 32;
+            const faviconCtx = faviconCanvas.getContext('2d');
+            faviconCtx.drawImage(img, 0, 0, 32, 32);
+            
+            const faviconDiv = document.createElement('div');
+            faviconDiv.innerHTML = `
+                <h3>Favicon (32x32)</h3>
+                <canvas width="32" height="32"></canvas>
+                <a href="${faviconCanvas.toDataURL('image/png')}" download="favicon.ico">Download favicon</a>
+            `;
+            const faviconCanvasElement = faviconDiv.querySelector('canvas');
+            faviconCanvasElement.getContext('2d').drawImage(img, 0, 0, 32, 32);
+            
+            iconsContainer.appendChild(faviconDiv);
+        };
+        img.src = url;
+    </script>
+</body>
+</html>

@@ -29,6 +29,7 @@ class ShoppingRecommender:
         2. Seasonal recommendations
         3. Items that need to be replenished based on purchase frequency
         4. Similar families' popular items
+        5. Common essential items for new users
 
         Args:
             family: The Family object to generate recommendations for
@@ -41,54 +42,106 @@ class ShoppingRecommender:
         from .models import GroceryItem, ShoppingList, ShoppingListItem, FamilyItemUsage
 
         try:
-            # Base recommendations on family's purchase history
-            recommendations = cls._get_family_favorites(family, store, limit)
+            recommendations_list = []
             
-            # Convert to list to avoid the slice has been taken error
-            recommendations_list = list(recommendations)
+            # Get the family's purchase history if any
+            family_purchase_exists = FamilyItemUsage.objects.filter(family=family).exists()
+            
+            # Base recommendations on family's purchase history if they have any
+            if family_purchase_exists:
+                recommendations = cls._get_family_favorites(family, store, limit)
+                recommendations_list = list(recommendations)
             
             # If we don't have enough recommendations, add seasonal items
             if len(recommendations_list) < limit:
                 seasonal_items = cls._get_seasonal_recommendations(store, limit - len(recommendations_list))
-                # Convert to list to avoid QuerySet operations after slicing
-                seasonal_items_list = list(seasonal_items)
                 
                 # Filter out duplicates
                 recommendation_ids = {item.id for item in recommendations_list}
-                filtered_seasonal = [item for item in seasonal_items_list if item.id not in recommendation_ids]
+                filtered_seasonal = [item for item in seasonal_items if item.id not in recommendation_ids]
                 
                 # Combine recommendations
                 recommendations_list.extend(filtered_seasonal)
             
             # Add items that might need replenishment based on purchase frequency
-            if len(recommendations_list) < limit:
+            # (only if family has purchase history)
+            if family_purchase_exists and len(recommendations_list) < limit:
                 replenishment_items = cls._get_replenishment_suggestions(family, store, limit - len(recommendations_list))
-                replenishment_items_list = list(replenishment_items)
                 
                 # Filter out duplicates
                 recommendation_ids = {item.id for item in recommendations_list}
-                filtered_replenishment = [item for item in replenishment_items_list if item.id not in recommendation_ids]
+                filtered_replenishment = [item for item in replenishment_items if item.id not in recommendation_ids]
                 
                 # Combine recommendations
                 recommendations_list.extend(filtered_replenishment)
             
-            # If still not enough, add collaborative filtering recommendations
-            if len(recommendations_list) < limit:
+            # If still not enough and family has purchase history, add collaborative filtering recommendations
+            if family_purchase_exists and len(recommendations_list) < limit:
                 collaborative_items = cls._get_collaborative_recommendations(family, store, limit - len(recommendations_list))
-                collaborative_items_list = list(collaborative_items)
                 
                 # Filter out duplicates
                 recommendation_ids = {item.id for item in recommendations_list}
-                filtered_collaborative = [item for item in collaborative_items_list if item.id not in recommendation_ids]
+                filtered_collaborative = [item for item in collaborative_items if item.id not in recommendation_ids]
                 
                 # Combine recommendations
                 recommendations_list.extend(filtered_collaborative)
+                
+            # For new users or if we still need more items, add common essential items
+            if len(recommendations_list) < limit:
+                # Define essential categories that most people need
+                essential_categories = ['Dairy', 'Vegetables', 'Fruit', 'Meat', 'Bakery', 'Pantry']
+                popular_essentials_query = GroceryItem.objects.filter(
+                    category__name__in=essential_categories
+                ).order_by('-global_popularity')
+                
+                # Filter by store if specified
+                if store:
+                    popular_essentials_query = popular_essentials_query.filter(store_info__store=store)
+                
+                # Get the popular essentials and exclude any items already in our recommendations
+                recommendation_ids = {item.id for item in recommendations_list}
+                popular_essentials = list(popular_essentials_query.exclude(
+                    id__in=recommendation_ids
+                )[:limit-len(recommendations_list)])
+                
+                # Add these to our recommendations
+                recommendations_list.extend(popular_essentials)
+            
+            # For new users with completely empty recommendations, add essential grocery items
+            if not recommendations_list:
+                # Essential items that most people need regularly
+                essential_items = ['Milk', 'Eggs', 'Bread', 'Butter', 'Cheese', 
+                                  'Chicken', 'Beef', 'Rice', 'Pasta', 'Potatoes',
+                                  'Onions', 'Tomatoes', 'Lettuce', 'Bananas', 'Apples']
+                
+                essential_query = GroceryItem.objects.filter(
+                    name__in=essential_items
+                ).order_by('-global_popularity')
+                
+                if store:
+                    essential_query = essential_query.filter(store_info__store=store)
+                
+                recommendations_list.extend(list(essential_query[:limit]))
+            
+            # If still not enough, add popular items across the board
+            if len(recommendations_list) < limit:
+                popular_query = GroceryItem.objects.all().order_by('-global_popularity')
+                
+                if store:
+                    popular_query = popular_query.filter(store_info__store=store)
+                
+                recommendation_ids = {item.id for item in recommendations_list}
+                popular_items = list(popular_query.exclude(
+                    id__in=recommendation_ids
+                )[:limit-len(recommendations_list)])
+                
+                recommendations_list.extend(popular_items)
 
             # Sort by global popularity and limit
             recommendations_list.sort(key=lambda x: -x.global_popularity)
             recommendations_list = recommendations_list[:limit]
             
-            # Return the compiled list
+            # Return the compiled list - should never be empty
             return recommendations_list
             
         except Exception as e:
@@ -220,37 +273,69 @@ class ShoppingRecommender:
         # Define seasonal categories mapping (simplified example)
         seasonal_categories = {
             # Winter
-            12: ['Christmas', 'Winter', 'Holiday'],
-            1: ['Winter Foods', 'Soups', 'Hot Beverages'],
-            2: ['Winter Foods', 'Valentine', 'Chocolate'],
+            12: ['Christmas', 'Winter', 'Holiday', 'Meat', 'Baking'],
+            1: ['Winter', 'Soups', 'Hot Beverages', 'Dairy', 'Meat'],
+            2: ['Winter', 'Valentine', 'Chocolate', 'Dairy', 'Bakery'],
             
             # Spring
-            3: ['Spring', 'Easter', 'Gardening'],
-            4: ['Spring Foods', 'Fresh Produce', 'Salads'],
-            5: ['Picnic', 'Barbecue', 'Outdoor'],
+            3: ['Spring', 'Easter', 'Gardening', 'Vegetables', 'Bakery'],
+            4: ['Spring', 'Fresh Produce', 'Salads', 'Vegetables', 'Fruit'],
+            5: ['Picnic', 'Barbecue', 'Outdoor', 'Meat', 'Snacks'],
             
             # Summer
-            6: ['Summer', 'Barbecue', 'Ice Cream'],
-            7: ['Summer Foods', 'Grilling', 'Cold Beverages'],
-            8: ['Summer Foods', 'Salads', 'Refreshments'],
+            6: ['Summer', 'Barbecue', 'Ice Cream', 'Beverages', 'Frozen'],
+            7: ['Summer', 'Grilling', 'Cold Beverages', 'Fruit', 'Frozen'],
+            8: ['Summer', 'Salads', 'Refreshments', 'Fruit', 'Vegetables'],
             
             # Fall
-            9: ['Back to School', 'Fall Foods', 'Baking'],
-            10: ['Fall', 'Halloween', 'Pumpkin'],
-            11: ['Thanksgiving', 'Fall', 'Baking'],
+            9: ['Back to School', 'Fall', 'Baking', 'Snacks', 'Pantry'],
+            10: ['Fall', 'Halloween', 'Pumpkin', 'Vegetables', 'Snacks'],
+            11: ['Thanksgiving', 'Fall', 'Baking', 'Meat', 'Vegetables'],
         }
         
         # Get categories for current month
         current_categories = seasonal_categories.get(current_month, [])
         
-        # Query items with these categories
+        # First try exact category name matches
         seasonal_items = GroceryItem.objects.filter(
             category__name__in=current_categories
         ).order_by('-global_popularity')
         
+        # If we don't have enough items, try partial matches using case-insensitive contains
+        if seasonal_items.count() < limit:
+            from django.db.models import Q
+            
+            # Build a Q object for each search term
+            q_objects = Q()
+            for category in current_categories:
+                q_objects |= Q(category__name__icontains=category)
+                
+            # Combine with existing items
+            seasonal_items_partial = GroceryItem.objects.filter(q_objects).exclude(
+                id__in=seasonal_items.values_list('id', flat=True)
+            ).order_by('-global_popularity')
+            
+            # Convert both to lists and combine
+            seasonal_items = list(seasonal_items) + list(seasonal_items_partial)
+        else:
+            seasonal_items = list(seasonal_items)
+        
+        # If still not enough items, include popular items by category
+        if len(seasonal_items) < limit:
+            top_categories = ['Vegetables', 'Dairy', 'Meat', 'Bakery', 'Fruit', 'Snacks', 'Beverages']
+            popular_items = GroceryItem.objects.filter(
+                category__name__in=top_categories
+            ).exclude(
+                id__in=[item.id for item in seasonal_items]
+            ).order_by('-global_popularity')[:limit-len(seasonal_items)]
+            
+            seasonal_items.extend(list(popular_items))
+            
         # Filter by store if specified
         if store:
-            seasonal_items = seasonal_items.filter(store_info__store=store)
+            store_id = store.id
+            seasonal_items = [item for item in seasonal_items 
+                             if item.store_info.filter(store_id=store_id).exists()]
             
         return seasonal_items[:limit]
     
@@ -389,26 +474,78 @@ class ShoppingRecommender:
         connect to a recipe database or use more sophisticated food pairing logic.
         """
         from .models import GroceryItem, ProductCategory
+        from django.db.models import Q
         
-        # Get categories of the items
-        item_categories = list(GroceryItem.objects.filter(
+        # Get categories and names of the items
+        items_with_categories = GroceryItem.objects.filter(
             id__in=item_ids,
             category__isnull=False
-        ).values_list('category_id', flat=True).distinct())
+        ).select_related('category')
         
-        # Define some basic recipe/pairing relationships
+        # Create two lists - one for category IDs, one for item names
+        item_categories = []
+        item_names = []
+        item_category_names = []
+        
+        for item in items_with_categories:
+            item_categories.append(item.category_id)
+            item_names.append(item.name.lower())
+            if item.category:
+                item_category_names.append(item.category.name.lower())
+        
+        # Define some basic recipe/pairing relationships (expanded)
         recipe_pairings = {
-            'Meat': ['Marinade', 'BBQ Sauce', 'Spices'],
-            'Pasta': ['Pasta Sauce', 'Cheese', 'Herbs'],
-            'Bread': ['Butter', 'Jam', 'Sandwich Filling'],
-            'Dairy': ['Cereal', 'Coffee', 'Tea'],
-            'Vegetables': ['Salad Dressing', 'Dips', 'Herbs'],
-            'Fruit': ['Yogurt', 'Cream', 'Honey'],
+            'Meat': ['Marinade', 'BBQ Sauce', 'Spices', 'Vegetables', 'Potatoes', 'Rice'],
+            'Beef': ['Potatoes', 'Onions', 'Mushrooms', 'Gravy', 'Spices', 'Vegetables'],
+            'Chicken': ['Rice', 'Pasta', 'Vegetables', 'Herbs', 'Lemon', 'Garlic'],
+            'Fish': ['Lemon', 'Herbs', 'Rice', 'Vegetables', 'Potatoes', 'Garlic'],
+            'Pasta': ['Pasta Sauce', 'Cheese', 'Herbs', 'Garlic', 'Olive Oil', 'Mushrooms'],
+            'Rice': ['Vegetables', 'Meat', 'Beans', 'Spices', 'Soy Sauce', 'Oil'],
+            'Bread': ['Butter', 'Jam', 'Cheese', 'Sandwich Filling', 'Eggs', 'Milk'],
+            'Dairy': ['Cereal', 'Coffee', 'Tea', 'Fruit', 'Bread', 'Eggs'],
+            'Vegetables': ['Salad Dressing', 'Dips', 'Herbs', 'Olive Oil', 'Lemon', 'Meat'],
+            'Fruit': ['Yogurt', 'Cream', 'Honey', 'Cereal', 'Ice Cream', 'Baking'],
+            'Cereal': ['Milk', 'Fruit', 'Yogurt', 'Sugar', 'Honey', 'Coffee'],
+            'Eggs': ['Bread', 'Cheese', 'Vegetables', 'Bacon', 'Milk', 'Butter'],
+            'Potatoes': ['Butter', 'Meat', 'Cheese', 'Vegetables', 'Herbs', 'Milk'],
+            'Bacon': ['Eggs', 'Bread', 'Cheese', 'Potatoes', 'Lettuce', 'Tomatoes'],
+            'Coffee': ['Milk', 'Sugar', 'Creamer', 'Breakfast', 'Cereal', 'Pastries'],
+            'Bakery': ['Butter', 'Jam', 'Coffee', 'Milk', 'Cheese', 'Fruit'],
+            'Snacks': ['Beverages', 'Dips', 'Cheese', 'Fruit', 'Cookies', 'Crackers'],
+            'Breakfast': ['Eggs', 'Milk', 'Bread', 'Cereal', 'Coffee', 'Fruit'],
+            'Lunch': ['Bread', 'Sandwich Filling', 'Cheese', 'Vegetables', 'Soup', 'Fruit'],
+            'Dinner': ['Meat', 'Vegetables', 'Pasta', 'Rice', 'Potatoes', 'Salad'],
+            'Baking': ['Flour', 'Sugar', 'Butter', 'Eggs', 'Milk', 'Vanilla'],
+            'Beverages': ['Snacks', 'Ice', 'Lemon', 'Lime', 'Sugar', 'Milk'],
+        }
+        
+        # Create a mapping of common food items to complementary items
+        food_pairs = {
+            'milk': ['cereal', 'coffee', 'tea', 'cookies', 'cake mix'],
+            'bread': ['butter', 'jam', 'cheese', 'eggs', 'peanut butter', 'lunch meat'],
+            'pasta': ['pasta sauce', 'parmesan cheese', 'garlic', 'olive oil', 'tomatoes'],
+            'rice': ['beans', 'vegetables', 'chicken', 'soy sauce', 'curry'],
+            'eggs': ['bacon', 'bread', 'cheese', 'milk', 'butter', 'vegetables'],
+            'chicken': ['rice', 'pasta', 'vegetables', 'potatoes', 'salad', 'spices'],
+            'beef': ['potatoes', 'onions', 'mushrooms', 'garlic', 'vegetables'],
+            'fish': ['lemon', 'rice', 'vegetables', 'potatoes', 'garlic', 'herbs'],
+            'cheese': ['bread', 'crackers', 'wine', 'grapes', 'pasta', 'olives'],
+            'apples': ['caramel', 'cinnamon', 'peanut butter', 'cheese', 'oats'],
+            'peanut butter': ['jelly', 'bread', 'honey', 'bananas', 'crackers'],
+            'lettuce': ['tomatoes', 'cucumbers', 'salad dressing', 'onions', 'carrots'],
+            'tomatoes': ['onions', 'garlic', 'basil', 'pasta', 'mozzarella', 'olive oil'],
+            'potatoes': ['butter', 'sour cream', 'cheese', 'bacon', 'milk', 'onions'],
+            'onions': ['garlic', 'peppers', 'beef', 'olive oil', 'tomatoes'],
+            'garlic': ['olive oil', 'onions', 'tomatoes', 'pasta', 'herbs'],
+            'cereal': ['milk', 'bananas', 'berries', 'sugar', 'honey'],
+            'coffee': ['milk', 'sugar', 'creamer', 'breakfast pastries', 'cookies'],
+            'tea': ['honey', 'lemon', 'sugar', 'milk', 'cookies'],
         }
         
         # Find items in complementary categories
         complementary_categories = []
         
+        # First try to find complements based on categories
         for category_id in item_categories:
             try:
                 category = ProductCategory.objects.get(id=category_id)
@@ -417,11 +554,38 @@ class ShoppingRecommender:
                         complementary_categories.extend(complements)
             except ProductCategory.DoesNotExist:
                 pass
+                
+        # Also try to find complements based on item names
+        direct_complements = []
+        for item_name in item_names:
+            for food, complements in food_pairs.items():
+                if food in item_name or any(food in category for category in item_category_names):
+                    direct_complements.extend(complements)
         
-        # Query items in complementary categories
-        query = GroceryItem.objects.filter(
-            category__name__in=complementary_categories
-        ).order_by('-global_popularity')
+        # Create a combined query
+        q_objects = Q()
+        
+        # Add category-based complements
+        if complementary_categories:
+            q_objects |= Q(category__name__in=complementary_categories)
+            
+        # Add direct name-based complements using name contains
+        for complement in direct_complements:
+            q_objects |= Q(name__icontains=complement)
+        
+        # If we have no complements to suggest, use popular basic items
+        if not complementary_categories and not direct_complements:
+            # Most common food categories
+            popular_categories = [
+                'Vegetables', 'Dairy', 'Meat', 'Bakery', 'Fruit', 
+                'Snacks', 'Beverages', 'Pantry', 'Breakfast'
+            ]
+            query = GroceryItem.objects.filter(
+                category__name__in=popular_categories
+            ).exclude(id__in=item_ids).order_by('-global_popularity')
+        else:
+            # Query items matching our criteria, excluding items already in the list
+            query = GroceryItem.objects.filter(q_objects).exclude(id__in=item_ids).order_by('-global_popularity')
         
         # Filter by store if specified
         if store:

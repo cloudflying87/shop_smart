@@ -304,6 +304,9 @@ class ShoppingListDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         shopping_list = self.object
 
+        # Import here to avoid circular imports
+        from django.db.models import Prefetch, OuterRef, Subquery
+        
         # Get list items organized with store location ordering
         list_items = shopping_list.items.select_related(
             'item', 'item__category'
@@ -321,6 +324,17 @@ class ShoppingListDetailView(LoginRequiredMixin, DetailView):
             'sort_order',
             'item__name'
         ).distinct()
+        
+        # Add the current store's location information to each item
+        for item in list_items:
+            # Find the store_info for this item and store
+            store_info = ItemStoreInfo.objects.filter(
+                item=item.item,
+                store=shopping_list.store
+            ).select_related('location').first()
+            
+            # Attach it directly to the item for easy access in the template
+            item.current_store_info = store_info
 
         # Use flat list view only
         all_items = list(list_items)    
@@ -627,6 +641,43 @@ class UpdateListItemPriceView(LoginRequiredMixin, View):
         except ValueError:
             return JsonResponse({'error': 'Invalid price'}, status=400)
 
+class GetListItemLocationView(LoginRequiredMixin, View):
+    """Get a list item's current location"""
+    
+    def get(self, request, list_id, item_id):
+        # Get the list item and verify permissions
+        list_item = get_object_or_404(
+            ShoppingListItem.objects.filter(
+                shopping_list__family__members__user=request.user,
+                shopping_list_id=list_id
+            ).select_related('item', 'shopping_list'),
+            pk=item_id
+        )
+        
+        try:
+            # Get the store info for this item in this store
+            store_info = ItemStoreInfo.objects.filter(
+                item=list_item.item,
+                store=list_item.shopping_list.store
+            ).select_related('location').first()
+            
+            if store_info and store_info.location:
+                return JsonResponse({
+                    'success': True,
+                    'location_id': store_info.location.id,
+                    'location_name': store_info.location.name
+                })
+            else:
+                return JsonResponse({
+                    'success': True,
+                    'location_id': None,
+                    'location_name': None
+                })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e), 'success': False}, status=400)
+
+
 class UpdateListItemLocationView(LoginRequiredMixin, View):
     """Update a list item's location"""
     
@@ -636,7 +687,7 @@ class UpdateListItemLocationView(LoginRequiredMixin, View):
             ShoppingListItem.objects.filter(
                 shopping_list__family__members__user=request.user,
                 shopping_list_id=list_id
-            ),
+            ).select_related('item', 'shopping_list', 'shopping_list__store'),
             pk=item_id
         )
         
@@ -658,6 +709,7 @@ class UpdateListItemLocationView(LoginRequiredMixin, View):
                     location_id = str(matching_location.id)
             
             # Update the location
+            location = None
             if location_id:
                 location = StoreLocation.objects.get(
                     id=location_id,
@@ -672,7 +724,7 @@ class UpdateListItemLocationView(LoginRequiredMixin, View):
             return JsonResponse({
                 'success': True,
                 'location_id': location_id,
-                'location_name': location.name if location_id else 'None'
+                'location_name': location.name if location else 'None'
             })
             
         except Exception as e:

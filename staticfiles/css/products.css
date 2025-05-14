@@ -1,0 +1,204 @@
+/* 
+ * ShopSmart Products CSS
+ * Styling for the products listing and management pages
+ */
+
+/* General Products List Styling */
+.products-container {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.item-info {
+  flex: 1;
+}
+
+/* Smaller elements for better space utilization */
+.list-group-item {
+  transition: background-color 0.2s;
+  padding: 0.65rem 1rem; /* Reduce padding */
+}
+
+.list-group-item h3.h5 {
+  font-size: 0.95rem; /* Smaller product name */
+  margin-bottom: 0.15rem;
+}
+
+.item-details {
+  font-size: 0.8rem; /* Smaller details text */
+  gap: 8px;
+}
+
+.list-group-item:hover {
+  background-color: var(--bg-secondary);
+}
+
+.search-form {
+  width: 100%;
+}
+
+.empty-state-icon {
+  color: var(--text-tertiary);
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.item-actions {
+  white-space: nowrap;
+  display: flex;
+  gap: 3px; /* Reduce space between buttons */
+}
+
+.pagination-container {
+  border-top: 1px solid var(--border-light);
+}
+
+/* Modern pagination styling - compact version */
+.modern-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pagination-arrow {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--primary);
+  border-radius: var(--border-radius-md);
+  color: var(--primary);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.pagination-arrow:hover {
+  background-color: var(--primary);
+  color: var(--text-on-primary);
+}
+
+.pagination-arrow.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--border-medium);
+  color: var(--text-tertiary);
+}
+
+.pagination-arrow svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 4px 10px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+}
+
+.current-page {
+  color: var(--primary);
+  font-size: 0.9rem;
+  margin: 0 2px;
+}
+
+.page-divider {
+  margin: 0 2px;
+  color: var(--text-tertiary);
+}
+
+.total-pages {
+  margin: 0 2px;
+}
+
+/* Hide text on very small screens but keep the icons */
+@media (max-width: 480px) {
+  .pagination-text {
+    display: none;
+  }
+  
+  .pagination-arrow {
+    padding: 8px;
+  }
+  
+  .pagination-info {
+    padding: 8px 12px;
+  }
+}
+
+.item-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.item-price {
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.price-label, .store-label {
+  color: var(--text-tertiary);
+}
+
+.item-price strong {
+  color: var(--color-success);
+}
+
+.store-name {
+  font-weight: 500;
+}
+
+/* Removed custom btn-danger styling to match theme */
+
+/* Smaller action buttons */
+.item-actions .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  min-height: 28px;
+  min-width: auto;
+}
+
+.item-actions svg {
+  width: 14px;
+  height: 14px;
+  margin-right: 3px;
+}
+
+/* Responsive Styles */
+@media (min-width: 768px) {
+  .products-container {
+    max-width: 960px;
+  }
+  
+  .item-actions .action-text {
+    display: inline;
+    font-size: 0.75rem;
+  }
+}
+
+/* Better action buttons on mobile */
+@media (max-width: 767px) {
+  .item-actions .btn {
+    padding: 4px;
+    margin-right: 2px;
+  }
+  
+  .item-actions svg {
+    margin-right: 0;
+  }
+}

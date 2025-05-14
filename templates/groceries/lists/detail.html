@@ -178,12 +178,26 @@
                                 {% if item.note %}
                                 <div class="item-note">{{ item.note }}</div>
                                 {% endif %}
+                                {% if item.current_store_info and item.current_store_info.location %}
+                                <div class="item-location">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" class="location-icon">
+                                        <path fill="none" d="M0 0h24v24H0z"/>
+                                        <path d="M12 20.9l4.95-4.95a7 7 0 1 0-9.9 0L12 20.9z" fill="currentColor"/>
+                                    </svg>
+                                    <span>{{ item.current_store_info.location.name }}</span>
+                                </div>
+                                {% endif %}
                             </div>
                             <div class="item-actions">
                                 <button class="item-action-btn edit-price-btn" data-item-id="{{ item.id }}" data-list-id="{{ list.id }}" title="Update Price">
                                     <span style="font-weight: bold; font-size: 18px;">$</span>
                                 </button>
-                                <button class="item-action-btn change-location-btn" data-item-id="{{ item.id }}" data-list-id="{{ list.id }}" title="Change Location">
+                                <button class="item-action-btn change-location-btn" 
+                                    data-item-id="{{ item.id }}" 
+                                    data-list-id="{{ list.id }}" 
+                                    data-location-id="{% if item.current_store_info and item.current_store_info.location %}{{ item.current_store_info.location.id }}{% endif %}"
+                                    data-location-name="{% if item.current_store_info and item.current_store_info.location %}{{ item.current_store_info.location.name }}{% endif %}"
+                                    title="Change Location">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
                                         <path fill="none" d="M0 0h24v24H0z"/>
                                         <path d="M12 20.9l4.95-4.95a7 7 0 1 0-9.9 0L12 20.9zm0 2.828l-6.364-6.364a9 9 0 1 1 12.728 0L12 23.728zM12 13a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 2a4 4 0 1 1 0-8 4 4 0 0 1 0 8z" fill="currentColor"/>
@@ -228,11 +242,17 @@
     <!-- Recommended Items Section - Only shown in Edit Mode -->
     {% if recommended_items %}
     <div class="card mt-4 edit-mode-only">
-        <div class="card-header">
-            <h3 class="card-title">Recommended Items</h3>
+        <div class="card-header bg-primary text-white recommendation-header">
+            <h3 class="card-title mb-0">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" class="mr-2">
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path d="M4.873 3h14.254a1 1 0 0 1 .809.412l3.823 5.256a.5.5 0 0 1-.037.633L12.367 21.602a.5.5 0 0 1-.734 0L.278 9.302a.5.5 0 0 1-.037-.634l3.823-5.256A1 1 0 0 1 4.873 3z" fill="currentColor"/>
+                </svg>
+                Recommended Items
+            </h3>
         </div>
         <div class="card-body">
-            <p class="text-muted mb-3">Based on your shopping history</p>
+            <p class="text-muted mb-3">Items that would go well with your shopping list</p>
             <div class="recommendation-items">
                 {% for item in recommended_items %}
                 <div class="recommendation-item">
@@ -240,10 +260,15 @@
                         {% if item.image_url %}
                         <img src="{{ item.image_url }}" alt="{{ item.name }}">
                         {% else %}
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">
-                            <path fill="none" d="M0 0h24v24H0z"/>
-                            <path d="M3 10h18v10.004c0 .55-.445.996-.993.996H3.993A.994.994 0 0 1 3 20.004V10zm6 2v2h6v-2H9zM2 9V5.994c0-.55.445-.994.993-.994h18.014c.548 0 .993.445.993.994V9H2z" fill="currentColor"/>
-                        </svg>
+                        <div class="recommendation-icon" style="background-color: rgba(76, 175, 80, 0.1);">
+                            {% if item.category %}
+                            <span class="category-label">{{ item.category.name }}</span>
+                            {% endif %}
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+                                <path fill="none" d="M0 0h24v24H0z"/>
+                                <path d="M3 10h18v10.004c0 .55-.445.996-.993.996H3.993A.994.994 0 0 1 3 20.004V10zm6 2v2h6v-2H9zM2 9V5.994c0-.55.445-.994.993-.994h18.014c.548 0 .993.445.993.994V9H2z" fill="currentColor"/>
+                            </svg>
+                        </div>
                         {% endif %}
                     </div>
                     <div class="recommendation-info">
@@ -251,12 +276,15 @@
                         {% if item.brand %}
                         <div class="recommendation-brand">{{ item.brand }}</div>
                         {% endif %}
+                        {% if item.category %}
+                        <div class="recommendation-category">{{ item.category.name }}</div>
+                        {% endif %}
                     </div>
                     <div class="add-recommendation">
-                        <button class="btn btn-sm btn-outline add-item-btn" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}">
+                        <button class="btn btn-sm btn-primary add-item-btn" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
                                 <path fill="none" d="M0 0h24v24H0z"/>
-                                <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
+                                <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="white"/>
                             </svg>
                             Add
                         </button>
