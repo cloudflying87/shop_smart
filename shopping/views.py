@@ -567,13 +567,20 @@ class UpdateListItemPriceView(LoginRequiredMixin, View):
                 item_store_info.save()
             except ItemStoreInfo.DoesNotExist:
                 # Create new store info if it doesn't exist
-                ItemStoreInfo.objects.create(
+                store_info = ItemStoreInfo.objects.create(
                     item=list_item.item,
                     store=list_item.shopping_list.store,
                     last_price=price,
                     average_price=price,
                     last_purchased=timezone.now()
                 )
+                
+                # Set the location based on the item's category
+                from .store_utils import find_matching_store_location
+                matching_location = find_matching_store_location(list_item.item, list_item.shopping_list.store)
+                if matching_location:
+                    store_info.location = matching_location
+                    store_info.save()
             
             return JsonResponse({
                 'success': True,
@@ -604,6 +611,14 @@ class UpdateListItemLocationView(LoginRequiredMixin, View):
                 item=list_item.item,
                 store=list_item.shopping_list.store
             )
+            
+            # If this is a new association and no location is specified,
+            # try to set it based on the item's category
+            if created and not location_id:
+                from .store_utils import find_matching_store_location
+                matching_location = find_matching_store_location(list_item.item, list_item.shopping_list.store)
+                if matching_location:
+                    location_id = str(matching_location.id)
             
             # Update the location
             if location_id:
@@ -1628,6 +1643,15 @@ class ItemStoreLocationView(LoginRequiredMixin, UpdateView):
                 store=store
             )
             
+            # If this is a new association and the item doesn't have a location yet,
+            # try to set it based on the item's category
+            if created and not info.location:
+                from .store_utils import find_matching_store_location
+                matching_location = find_matching_store_location(self.object, store)
+                if matching_location:
+                    info.location = matching_location
+                    info.save()
+            
             # Get store locations
             locations = StoreLocation.objects.filter(store=store).order_by('sort_order', 'name')
             
@@ -1655,6 +1679,15 @@ class ItemStoreLocationView(LoginRequiredMixin, UpdateView):
                 item=self.object,
                 store=store
             )
+            
+            # If this is a new association and no location is being explicitly set,
+            # try to set it based on the item's category
+            if created and not location_id:
+                from .store_utils import find_matching_store_location
+                matching_location = find_matching_store_location(self.object, store)
+                if matching_location:
+                    location_id = matching_location.id
+                    location = matching_location
             
             # Set location (or None to remove it)
             if location_id:

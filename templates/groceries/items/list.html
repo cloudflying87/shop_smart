@@ -73,7 +73,7 @@
                                         </svg>
                                         <span class="action-text">Edit</span>
                                     </a>
-                                    <a href="{% url 'groceries:delete_item' pk=item.id %}" class="btn btn-sm btn-outline btn-danger" title="Delete Item">
+                                    <a href="{% url 'groceries:delete_item' pk=item.id %}" class="btn btn-sm btn-outline" title="Delete Item">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
                                             <path fill="none" d="M0 0h24v24H0z"/>
                                             <path d="M17 6h5v2h-2v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8H2V6h5V3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3zm1 2H6v12h12V8zm-9 3h2v6H9v-6zm4 0h2v6h-2v-6zM9 4v2h6V4H9z" fill="currentColor"/>
@@ -89,45 +89,80 @@
                 <!-- Pagination -->
                 {% if is_paginated %}
                 <div class="pagination-container mt-3 p-3">
-                    <ul class="pagination justify-content-center">
+                    <div class="modern-pagination">
+                        <!-- First and Previous buttons -->
                         {% if page_obj.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page=1{% if search_term %}&search={{ search_term }}{% endif %}" aria-label="First">
-                                    <span aria-hidden="true">&laquo;&laquo;</span>
-                                </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
+                            <a class="pagination-arrow" href="?page=1{% if search_term %}&search={{ search_term }}{% endif %}" aria-label="First page">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z" fill="currentColor"/>
+                                </svg>
+                                <span class="pagination-text">First</span>
+                            </a>
+                            <a class="pagination-arrow" href="?page={{ page_obj.previous_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}" aria-label="Previous page">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/>
+                                </svg>
+                                <span class="pagination-text">Prev</span>
+                            </a>
+                        {% else %}
+                            <span class="pagination-arrow disabled">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z" fill="currentColor"/>
+                                </svg>
+                                <span class="pagination-text">First</span>
+                            </span>
+                            <span class="pagination-arrow disabled">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/>
+                                </svg>
+                                <span class="pagination-text">Prev</span>
+                            </span>
                         {% endif %}
                         
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                                <li class="page-item active">
-                                    <a class="page-link" href="?page={{ num }}{% if search_term %}&search={{ search_term }}{% endif %}">{{ num }}</a>
-                                </li>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}{% if search_term %}&search={{ search_term }}{% endif %}">{{ num }}</a>
-                                </li>
-                            {% endif %}
-                        {% endfor %}
+                        <!-- Page info -->
+                        <div class="pagination-info">
+                            <span class="current-page">{{ page_obj.number }}</span>
+                            <span class="page-divider">of</span>
+                            <span class="total-pages">{{ page_obj.paginator.num_pages }}</span>
+                        </div>
                         
+                        <!-- Next and Last buttons -->
                         {% if page_obj.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}" aria-label="Next">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_term %}&search={{ search_term }}{% endif %}" aria-label="Last">
-                                    <span aria-hidden="true">&raquo;&raquo;</span>
-                                </a>
-                            </li>
+                            <a class="pagination-arrow" href="?page={{ page_obj.next_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}" aria-label="Next page">
+                                <span class="pagination-text">Next</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/>
+                                </svg>
+                            </a>
+                            <a class="pagination-arrow" href="?page={{ page_obj.paginator.num_pages }}{% if search_term %}&search={{ search_term }}{% endif %}" aria-label="Last page">
+                                <span class="pagination-text">Last</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z" fill="currentColor"/>
+                                </svg>
+                            </a>
+                        {% else %}
+                            <span class="pagination-arrow disabled">
+                                <span class="pagination-text">Next</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/>
+                                </svg>
+                            </span>
+                            <span class="pagination-arrow disabled">
+                                <span class="pagination-text">Last</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="none" d="M0 0h24v24H0z"/>
+                                    <path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z" fill="currentColor"/>
+                                </svg>
+                            </span>
                         {% endif %}
-                    </ul>
+                    </div>
                 </div>
                 {% endif %}
             {% else %}

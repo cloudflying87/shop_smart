@@ -304,6 +304,84 @@ def search_store_info(query):
             "address": ""
         }
 
+def find_matching_store_location(item, store):
+    """
+    Find the appropriate store location for an item based on its category.
+    
+    Args:
+        item: GroceryItem object
+        store: GroceryStore object
+        
+    Returns:
+        StoreLocation object or None if no matching location found
+    """
+    from .models import ProductCategory
+    
+    # If item has no category, return None
+    if not item.category:
+        return None
+        
+    # Get a list of all store locations
+    store_locations = StoreLocation.objects.filter(store=store)
+    if not store_locations.exists():
+        return None
+        
+    # Get item category name
+    category_name = item.category.name
+    
+    # Map of category names to common store section names
+    category_to_location_map = {
+        # Produce-related
+        'Vegetables': ['Produce', 'Fruits & Vegetables', 'Fresh Produce'],
+        'Fruits': ['Produce', 'Fruits & Vegetables', 'Fresh Produce'],
+        
+        # Dairy-related
+        'Dairy': ['Dairy', 'Refrigerated'],
+        
+        # Meat & Seafood
+        'Meat': ['Meat', 'Meat & Seafood'],
+        'Seafood': ['Seafood', 'Fish', 'Meat & Seafood'],
+        
+        # Bakery-related
+        'Bakery': ['Bakery', 'Bread', 'Baked Goods'],
+        
+        # Pantry-related
+        'Pantry': ['Dry Goods', 'Canned Goods', 'Pasta & Rice'],
+        
+        # Snacks-related
+        'Snacks': ['Snacks', 'Chips & Crackers'],
+        
+        # Beverages-related
+        'Beverages': ['Beverages', 'Drinks', 'Soda & Water'],
+        
+        # Frozen-related
+        'Frozen': ['Frozen Foods', 'Frozen'],
+        
+        # Household-related
+        'Household': ['Household', 'Cleaning Supplies', 'Home'],
+        
+        # Personal Care-related
+        'Personal Care': ['Health & Beauty', 'Personal Care', 'Pharmacy'],
+        
+        # Baby & Pet-related
+        'Baby & Pet': ['Baby Products', 'Pet Supplies', 'Pet Food']
+    }
+    
+    # Find the matching location names for this category
+    potential_location_names = category_to_location_map.get(category_name, [])
+    
+    # Add the category name itself as a potential match
+    potential_location_names.append(category_name)
+    
+    # Try to find a matching location in the store
+    for location_name in potential_location_names:
+        for store_location in store_locations:
+            if location_name.lower() in store_location.name.lower():
+                return store_location
+    
+    # If no match found, return None
+    return None
+
 def save_store_logo_from_url(store, logo_url):
     """
     Downloads a logo from a URL and saves it to the store object.
