@@ -482,6 +482,25 @@ class AddListItemView(LoginRequiredMixin, View):
         try:
             item = GroceryItem.objects.get(id=item_id)
             
+            # Ensure the item has a category if one isn't already assigned
+            if not item.category and shopping_list.store:
+                # Try to get item store info for this store
+                store_info = item.store_info.filter(store=shopping_list.store).first()
+                if store_info and store_info.location:
+                    # Try to find a product category similar to the store location name
+                    from django.db.models import Q
+                    from .models import ProductCategory
+                    
+                    location_name = store_info.location.name.lower()
+                    categories = ProductCategory.objects.filter(
+                        Q(name__icontains=location_name) | 
+                        Q(parent__name__icontains=location_name)
+                    ).first()
+                    
+                    if categories:
+                        item.category = categories
+                        item.save(update_fields=['category'])
+            
             # Create list item
             list_item = ShoppingListItem.objects.create(
                 shopping_list=shopping_list,
@@ -522,6 +541,24 @@ class ToggleListItemView(LoginRequiredMixin, View):
         
         # Toggle checked status
         list_item.checked = not list_item.checked
+        
+        # Update sort_order based on checked status
+        # If checked, give it a high sort_order to move it to the bottom
+        # If unchecked, give it a low sort_order to move it to the top
+        if list_item.checked:
+            # Get the highest sort_order in this list and add 100 to ensure it goes to the bottom
+            max_sort_order = ShoppingListItem.objects.filter(
+                shopping_list_id=list_id
+            ).order_by('-sort_order').values_list('sort_order', flat=True).first() or 0
+            list_item.sort_order = max_sort_order + 100
+        else:
+            # Get the lowest sort_order of unchecked items and subtract 10 to ensure it goes to the top
+            min_sort_order = ShoppingListItem.objects.filter(
+                shopping_list_id=list_id,
+                checked=False
+            ).order_by('sort_order').values_list('sort_order', flat=True).first() or 0
+            list_item.sort_order = min_sort_order - 10
+        
         list_item.save()
         
         return JsonResponse({

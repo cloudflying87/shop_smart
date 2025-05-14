@@ -132,38 +132,48 @@ class ShoppingRecommender:
                 )
             
             # Get items already in the list
-            existing_items = shopping_list.items.values_list('item_id', flat=True)
+            existing_items = list(shopping_list.items.values_list('item_id', flat=True))
             
             # Get common co-purchased items from this family's history
             family = shopping_list.family
-            list_items = list(existing_items)
             
             # Find items that are frequently purchased with items in this list
             co_purchased = cls._get_co_purchased_items(
                 family, 
-                list_items, 
+                existing_items, 
                 store=shopping_list.store,
                 limit=limit
             )
             
+            # Convert to list immediately to avoid the slice has been taken error
+            co_purchased_list = list(co_purchased)
+            
             # If we don't have enough suggestions, add recipe-based complements
-            if co_purchased.count() < limit:
-                recipe_items = cls._get_recipe_complements(
-                    list_items,
-                    store=shopping_list.store,
-                    limit=limit - co_purchased.count()
-                )
-                # Convert QuerySets to lists to avoid the "Cannot filter a query once a slice has been taken" error
-                co_purchased_list = list(co_purchased)
+            if len(co_purchased_list) < limit:
                 co_purchased_ids = [item.id for item in co_purchased_list]
-                recipe_items_list = list(recipe_items.exclude(id__in=co_purchased_ids + list_items))
+                remaining_limit = limit - len(co_purchased_list)
+                
+                # Get recipe-based complements, excluding items we already have
+                recipe_items = cls._get_recipe_complements(
+                    existing_items,
+                    store=shopping_list.store,
+                    limit=remaining_limit
+                )
+                
+                # Convert to list and exclude items we already have in co_purchased_list
+                recipe_items_list = []
+                for item in recipe_items:
+                    if item.id not in co_purchased_ids and item.id not in existing_items:
+                        recipe_items_list.append(item)
+                        if len(recipe_items_list) >= remaining_limit:
+                            break
                 
                 # Combine recommendations
                 all_recommendations = co_purchased_list + recipe_items_list
             else:
-                all_recommendations = list(co_purchased)
+                all_recommendations = co_purchased_list
             
-            # Ensure we're not recommending items already in the list
+            # Ensure we're not recommending items already in the list (double check)
             all_recommendations = [item for item in all_recommendations if item.id not in existing_items]
             
             # Sort by global popularity
@@ -409,12 +419,13 @@ class ShoppingRecommender:
                 pass
         
         # Query items in complementary categories
-        complementary_items = GroceryItem.objects.filter(
+        query = GroceryItem.objects.filter(
             category__name__in=complementary_categories
         ).order_by('-global_popularity')
         
         # Filter by store if specified
         if store:
-            complementary_items = complementary_items.filter(store_info__store=store)
+            query = query.filter(store_info__store=store)
             
-        return complementary_items[:limit]
+        # Convert to list immediately to avoid the "Cannot filter a query once a slice has been taken" error
+        return list(query[:limit])

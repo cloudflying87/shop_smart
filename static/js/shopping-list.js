@@ -46,17 +46,7 @@ function handleCheckboxClick() {
         }
     });
     
-    // Move checked items to bottom immediately
-    if (typeof moveCheckedItemToBottom === 'function') {
-        moveCheckedItemToBottom(listItem, isNowChecked);
-    }
-    
-    // Update progress immediately
-    if (typeof updateProgress === 'function') {
-        updateProgress();
-    }
-    
-    // Send toggle request to server
+    // Send toggle request to server first to ensure database gets updated
     fetch(`/app/lists/${listId}/items/${itemId}/toggle/`, {
         method: 'POST',
         headers: {
@@ -65,18 +55,28 @@ function handleCheckboxClick() {
     })
     .then(response => response.json())
     .then(data => {
-        if (!data.success) {
+        if (data.success) {
+            // After success, move checked items to bottom
+            if (typeof moveCheckedItemToBottom === 'function') {
+                moveCheckedItemToBottom(listItem, isNowChecked);
+            }
+            
+            // Update progress immediately
+            if (typeof updateProgress === 'function') {
+                updateProgress();
+            }
+        } else {
             // Revert the visual state if there was an error
             allCheckboxes.forEach(cb => cb.classList.toggle('checked'));
             allListItems.forEach(li => li.classList.toggle('checked'));
-            // Error toggling item
+            console.error('Error toggling item');
         }
     })
     .catch(error => {
         // Revert the visual state if there was an error
         allCheckboxes.forEach(cb => cb.classList.toggle('checked'));
         allListItems.forEach(li => li.classList.toggle('checked'));
-        // Handle error
+        console.error('Error toggling item:', error);
     });
 }
 
@@ -555,34 +555,55 @@ $(document).ready(function() {
         listItem.style.opacity = '0.5';
         listItem.style.transform = 'translateX(10px)';
         
-        // Reorganize all items - unchecked at top, checked at bottom
-        // Get all items in the list
-        const allItems = Array.from(listContainer.querySelectorAll('.list-item'));
-        
-        // Separate checked and unchecked items
-        const uncheckedItems = allItems.filter(item => !item.classList.contains('checked'));
-        const checkedItems = allItems.filter(item => item.classList.contains('checked'));
-        
-        // First, remove all items from the DOM
-        allItems.forEach(item => {
-            if (item.parentNode) {
-                item.parentNode.removeChild(item);
-            }
-        });
-        
-        // Then, add them back in the correct order (unchecked first, then checked)
-        uncheckedItems.forEach(item => {
-            listContainer.appendChild(item);
-        });
-        
-        checkedItems.forEach(item => {
-            listContainer.appendChild(item);
-        });
-        
-        // Restore the visual appearance after the move
+        // Delay slightly to allow the visual feedback to be seen
         setTimeout(() => {
+            // Reorganize all items - unchecked at top, checked at bottom
+            // Get all items in the list
+            const allItems = Array.from(listContainer.querySelectorAll('.list-item'));
+            
+            // Separate checked and unchecked items
+            const uncheckedItems = allItems.filter(item => !item.classList.contains('checked'));
+            const checkedItems = allItems.filter(item => item.classList.contains('checked'));
+            
+            // Save references to the parent nodes
+            const parentNodes = new Map();
+            allItems.forEach(item => {
+                if (item.parentNode) {
+                    parentNodes.set(item, item.parentNode);
+                }
+            });
+            
+            // First, detach all items from the DOM (but keep references)
+            allItems.forEach(item => {
+                if (item.parentNode) {
+                    item.parentNode.removeChild(item);
+                }
+            });
+            
+            // Then, add them back in the correct order (unchecked first, then checked)
+            uncheckedItems.forEach(item => {
+                listContainer.appendChild(item);
+            });
+            
+            checkedItems.forEach(item => {
+                listContainer.appendChild(item);
+            });
+            
+            // Restore the visual appearance after the move with a smoother animation
             listItem.style.opacity = '1';
             listItem.style.transform = 'translateX(0)';
+            
+            // Highlight the moved item briefly
+            if (isChecked) {
+                setTimeout(() => {
+                    listItem.style.transition = 'background-color 0.5s ease';
+                    listItem.style.backgroundColor = 'rgba(0, 128, 0, 0.1)';
+                    
+                    setTimeout(() => {
+                        listItem.style.backgroundColor = '';
+                    }, 800);
+                }, 150);
+            }
         }, 150);
     }
     
