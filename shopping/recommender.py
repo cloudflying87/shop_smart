@@ -153,21 +153,24 @@ class ShoppingRecommender:
                     store=shopping_list.store,
                     limit=limit - co_purchased.count()
                 )
-                # Exclude items already recommended
-                co_purchased_ids = list(co_purchased.values_list('id', flat=True))
-                recipe_items = recipe_items.exclude(id__in=co_purchased_ids + list_items)
+                # Convert QuerySets to lists to avoid the "Cannot filter a query once a slice has been taken" error
+                co_purchased_list = list(co_purchased)
+                co_purchased_ids = [item.id for item in co_purchased_list]
+                recipe_items_list = list(recipe_items.exclude(id__in=co_purchased_ids + list_items))
                 
-                recommendations = co_purchased | recipe_items
+                # Combine recommendations
+                all_recommendations = co_purchased_list + recipe_items_list
             else:
-                recommendations = co_purchased
+                all_recommendations = list(co_purchased)
             
             # Ensure we're not recommending items already in the list
-            recommendations = recommendations.exclude(id__in=existing_items)
+            all_recommendations = [item for item in all_recommendations if item.id not in existing_items]
             
-            # Order by relevance and limit
-            recommendations = recommendations.order_by('-global_popularity')[:limit]
+            # Sort by global popularity
+            all_recommendations.sort(key=lambda x: -x.global_popularity)
             
-            return recommendations
+            # Limit to requested number
+            return all_recommendations[:limit]
             
         except Exception as e:
             logger.error(f"Error generating recommendations for list {shopping_list.id}: {str(e)}")

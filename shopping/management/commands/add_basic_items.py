@@ -17,14 +17,14 @@ class Command(BaseCommand):
                 'Broccoli', 'Cauliflower', 'Spinach', 'Kale', 'Lettuce', 'Cabbage',
                 'Bell Peppers', 'Mushrooms', 'Garlic', 'Ginger', 'Cucumber', 'Zucchini',
                 'Celery', 'Green Beans', 'Corn', 'Radishes', 'Lemons', 'Limes', 'Green Onions',
-                'Asparagus', 'Eggplant', 'Brussels Sprouts', 'Squash', 'Artichokes', 'Beets'
+                'Asparagus', 'Eggplant', 'Brussels Sprouts', 'Squash', 'Artichokes', 'Beets','Lettuce'
             ],
             'Dairy': [
                 'Milk', 'Butter', 'Eggs', 'Yogurt', 'Cheese', 'Cottage Cheese', 'Cream Cheese',
                 'Sour Cream', 'Whipping Cream', 'Half and Half', 'Cheddar Cheese',
                 'Mozzarella Cheese', 'Swiss Cheese', 'Parmesan Cheese', 'Ricotta Cheese',
                 'Greek Yogurt', 'Buttermilk', 'Almond Milk', 'Soy Milk', 'Oat Milk',
-                'Heavy Cream', 'Ice Cream', 'Margarine', 'Whipped Cream', 'Feta Cheese'
+                'Heavy Cream', 'Ice Cream', 'Margarine', 'Whipped Cream', 'Feta Cheese','Organic Almond Milk'
             ],
             'Meat': [
                 'Chicken Breast', 'Ground Beef', 'Steak', 'Pork Chops', 'Bacon', 'Ham',
@@ -60,7 +60,7 @@ class Command(BaseCommand):
                 'Nuts', 'Trail Mix', 'Granola Bars', 'Chocolate', 'Candy', 'Dried Fruit',
                 'Jerky', 'Rice Cakes', 'Fruit Snacks', 'Cookies', 'Pudding', 'Jello',
                 'Protein Bars', 'Peanuts', 'Almonds', 'Cashews', 'Sunflower Seeds',
-                'Popcorn', 'Hummus', 'Salsa', 'Guacamole', 'Cheese Sticks'
+                'Popcorn', 'Hummus', 'Salsa', 'Guacamole', 'Cheese Sticks','Veggie Sticks'
             ],
             'Beverages': [
                 'Water', 'Soda', 'Juice', 'Coffee', 'Tea', 'Beer', 'Wine', 'Milk',

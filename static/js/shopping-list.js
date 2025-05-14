@@ -46,6 +46,16 @@ function handleCheckboxClick() {
         }
     });
     
+    // Move checked items to bottom immediately
+    if (typeof moveCheckedItemToBottom === 'function') {
+        moveCheckedItemToBottom(listItem, isNowChecked);
+    }
+    
+    // Update progress immediately
+    if (typeof updateProgress === 'function') {
+        updateProgress();
+    }
+    
     // Send toggle request to server
     fetch(`/app/lists/${listId}/items/${itemId}/toggle/`, {
         method: 'POST',
@@ -55,17 +65,7 @@ function handleCheckboxClick() {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            // Handle item position based on checked state
-            if (typeof moveCheckedItemToBottom === 'function') {
-                moveCheckedItemToBottom(listItem, isNowChecked);
-            }
-            
-            // Update progress
-            if (typeof updateProgress === 'function') {
-                updateProgress();
-            }
-        } else {
+        if (!data.success) {
             // Revert the visual state if there was an error
             allCheckboxes.forEach(cb => cb.classList.toggle('checked'));
             allListItems.forEach(li => li.classList.toggle('checked'));
@@ -546,47 +546,44 @@ $(document).ready(function() {
     function moveCheckedItemToBottom(listItem, isChecked) {
         const itemId = listItem.dataset.itemId;
         
-        // Find all instances of this item
-        const allListItems = document.querySelectorAll(`.list-item[data-item-id="${itemId}"]`);
+        // Get the flat list container
+        const listContainer = document.getElementById('flat-list');
+        if (!listContainer) return;
         
-        // Move each instance to the appropriate position in its container
-        allListItems.forEach(item => {
-            // Get the parent list container
-            let listContainer = null;
-            
-            // Get the flat list container
-            listContainer = document.getElementById('flat-list');
-            
-            if (listContainer) {
-                // Apply transition effect
-                item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                item.style.opacity = '0.5';
-                item.style.transform = 'translateX(10px)';
-                
-                // Keep the item visible in the DOM
-                item.style.display = 'flex';
-                
-                // Only move checked items to the end
-                if (isChecked) {
-                    setTimeout(() => {
-                        // Move the item to the end of its list
-                        listContainer.appendChild(item);
-                        
-                        // Restore visibility with animation
-                        setTimeout(() => {
-                            item.style.opacity = '1';
-                            item.style.transform = 'translateX(0)';
-                        }, 50);
-                    }, 300);
-                } else {
-                    // If being unchecked, just restore visibility without moving
-                    setTimeout(() => {
-                        item.style.opacity = '1';
-                        item.style.transform = 'translateX(0)';
-                    }, 50);
-                }
+        // Apply visual effects to the current item being checked/unchecked
+        listItem.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        listItem.style.opacity = '0.5';
+        listItem.style.transform = 'translateX(10px)';
+        
+        // Reorganize all items - unchecked at top, checked at bottom
+        // Get all items in the list
+        const allItems = Array.from(listContainer.querySelectorAll('.list-item'));
+        
+        // Separate checked and unchecked items
+        const uncheckedItems = allItems.filter(item => !item.classList.contains('checked'));
+        const checkedItems = allItems.filter(item => item.classList.contains('checked'));
+        
+        // First, remove all items from the DOM
+        allItems.forEach(item => {
+            if (item.parentNode) {
+                item.parentNode.removeChild(item);
             }
         });
+        
+        // Then, add them back in the correct order (unchecked first, then checked)
+        uncheckedItems.forEach(item => {
+            listContainer.appendChild(item);
+        });
+        
+        checkedItems.forEach(item => {
+            listContainer.appendChild(item);
+        });
+        
+        // Restore the visual appearance after the move
+        setTimeout(() => {
+            listItem.style.opacity = '1';
+            listItem.style.transform = 'translateX(0)';
+        }, 150);
     }
     
     // Toast notification function
