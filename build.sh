@@ -6,6 +6,7 @@ BACKUP_data=false
 REBUILD=false
 RESTORE=false
 ALL=false
+SOFT_REBUILD=false
 REMOTE_SERVER="davidhale87@172.16.205.4"
 REMOTE_BACKUP_DIR="/halefiles/Coding/ShopSmartBackups"
 
@@ -20,12 +21,14 @@ show_help() {
     echo "  -b, --backup      Only Backs up data.sql"
     echo "  -t, --backupall   Backs up and copies the 3 different files."
     echo "  -r, --rebuild     Rebuild containers (stop, remove, prune)"
+    echo "  -s, --soft        Soft rebuild (backup DB, rebuild app, keep DB)"
     echo "  -o, --restore     Restore database from backup"
     echo ""
     echo "Example:"
     echo "  $0 -d 2023-05-13 -b -c -s  # Backup, copy, and transfer files with date 2023-05-13"
     echo "  $0 -a -d 2023-05-13       # Run all steps with date 2023-05-13"
     echo "  $0 -r -u -m               # Rebuild, restart containers and run migrations"
+    echo "  $0 -s -d 2023-05-13       # Soft rebuild with backup but keep database"
 }
 
 # Parse command line arguments
@@ -59,6 +62,10 @@ while [[ $# -gt 0 ]]; do
             RESTORE=true
             shift
             ;;
+        -s|--soft)
+            SOFT_REBUILD=true
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
             show_help
@@ -75,8 +82,8 @@ if [ "$ALL" = true ]; then
 fi
 
 # Check if date is provided when needed
-if [[ ("$BACKUP_data" = true || "$BACKUP_all" = true || "$RESTORE" = true) && -z "$USER_DATE" ]]; then
-    echo "Error: Date (-d or --date) is required for backup/restore operations"
+if [[ ("$BACKUP_data" = true || "$BACKUP_all" = true || "$RESTORE" = true || "$SOFT_REBUILD" = true) && -z "$USER_DATE" ]]; then
+    echo "Error: Date (-d or --date) is required for backup/restore/soft-rebuild operations"
     show_help
     exit 1
 fi
@@ -91,6 +98,7 @@ echo "Running build with the following options:"
 echo "Date: $USER_DATE"
 echo "Backup: $BACKUP_all"
 echo "Rebuild: $REBUILD"
+echo "Soft Rebuild: $SOFT_REBUILD"
 echo "Restore: $RESTORE"
 echo "-----------------------------------"
 
@@ -146,6 +154,47 @@ if [ "$REBUILD" = true ]; then
     sudo docker compose -f docker-compose.yml exec web python manage.py makemigrations 
     sudo docker compose -f docker-compose.yml exec web python manage.py migrate 
     
+fi
+
+# Soft rebuild - backup database and rebuild app without deleting database
+if [ "$SOFT_REBUILD" = true ]; then
+    echo "Starting soft rebuild - backing up database and rebuilding app"
+    
+    # First, backup the database
+    echo "Backing up database with date: $USER_DATE"
+    sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -a -O -T django_migrations -f /media/shop_smartbackup_${USER_DATE}_data_soft.sql 
+    sudo docker cp shop_smart-db-1:/media/shop_smartbackup_${USER_DATE}_data_soft.sql /media/ 
+    
+    # Also create a full backup for safety
+    sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -O -T django_migrations -f /media/shop_smartbackup_${USER_DATE}_full_soft.sql 
+    sudo docker cp shop_smart-db-1:/media/shop_smartbackup_${USER_DATE}_full_soft.sql /media/ 
+    
+    # Transfer backups to remote server
+    echo "Transferring backup files to remote server"
+    scp /media/shop_smartbackup_${USER_DATE}_data_soft.sql $REMOTE_SERVER:$REMOTE_BACKUP_DIR/
+    scp /media/shop_smartbackup_${USER_DATE}_full_soft.sql $REMOTE_SERVER:$REMOTE_BACKUP_DIR/
+    
+    echo "Stopping and removing containers (keeping database)"
+    sudo docker stop shop_smart-web-1 
+    sudo docker stop shop_smart-nginx-1 
+    sudo docker rm shop_smart-web-1 
+    sudo docker rm shop_smart-nginx-1 
+    
+    # Clean up images but keep volumes (including postgres_data)
+    sudo docker image prune -a -f 
+    sudo docker volume remove shop_smart_static_volume 
+    sudo docker volume remove shop_smart_media_volume
+    # Note: We're NOT removing shop_smart_postgres_data volume
+    
+    echo "Starting containers with existing database"
+    sudo docker compose up -d 
+    
+    echo "Running Django migrations"
+    sudo docker compose -f docker-compose.yml exec web python manage.py collectstatic --noinput
+    sudo docker compose -f docker-compose.yml exec web python manage.py makemigrations 
+    sudo docker compose -f docker-compose.yml exec web python manage.py migrate 
+    
+    echo "Soft rebuild completed - database preserved"
 fi
 
 # Restore database
