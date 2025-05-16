@@ -13,6 +13,11 @@ from django.views.generic import (
 from django.views.generic.base import TemplateView
 from django.utils import timezone
 
+import logging
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
 from .models import (
     Family, FamilyMember, UserProfile, GroceryStore, GroceryItem,
     ShoppingList, ShoppingListItem, StoreLocation,
@@ -346,11 +351,7 @@ class ShoppingListDetailView(LoginRequiredMixin, DetailView):
         except Exception as e:
             # Use a default empty list if an error occurs
             recommended_items = []
-            # The logger variable might not be defined - handle safely
-            try:
-                logger.error(f"Error getting recommendations: {str(e)}")
-            except NameError:
-                print(f"Error getting recommendations: {str(e)}")
+            logger.error(f"Error getting recommendations: {str(e)}", exc_info=True)
 
         # Add all items to context for flat list view
         context['all_items'] = all_items
