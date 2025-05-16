@@ -115,8 +115,8 @@ if [ "$BACKUP_all" = true ]; then
     sudo docker cp shop_smart-db-1:/media/shop_smartbackup_${USER_DATE}_clean.sql /media/ 
     echo "Transferring backup files to remote server"
     scp /media/shop_smartbackup_${USER_DATE}_data.sql davidhale87@172.16.205.4:/halefiles/Coding/LogbookDBBackups
-    scp /media/shop_smartbackup_${USER_DATE}.sql $REMOTE_SERVER:$REMOTE_BACKUP_DIR/
-    scp /media/shop_smartbackup_${USER_DATE}_clean.sql $REMOTE_SERVER:$REMOTE_BACKUP_DIR/
+    scp /media/shop_smartbackup_${USER_DATE}.sql $REMOTE_SERVER:$REMOTE_BACKUP_DIR
+    scp /media/shop_smartbackup_${USER_DATE}_clean.sql $REMOTE_SERVER:$REMOTE_BACKUP_DIR
 fi
 
 # Change to project directory
