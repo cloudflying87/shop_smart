@@ -1,0 +1,25 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        ShopSmart Admin
+    </a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/custom.css' %}">
+{% endblock %}
+
+{% block nav-global %}
+<div class="nav-global">
+    <a href="{% url 'admin:admin_dashboard' %}">Dashboard</a> |
+    <a href="{% url 'admin:admin_reports' %}">Reports</a> |
+    <a href="{% url 'admin:admin_export_data' %}">Export Data</a> |
+    <a href="{% url 'groceries:dashboard' %}" target="_blank">View Site</a>
+</div>
+{% endblock %}

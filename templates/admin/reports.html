@@ -1,0 +1,195 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Reports | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrastyle %}
+<style>
+    .report-section {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .report-section h2 {
+        margin-top: 0;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 10px;
+    }
+    
+    .report-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .report-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        background: #f9f9f9;
+    }
+    
+    .report-card h3 {
+        margin-top: 0;
+        color: #333;
+    }
+    
+    .report-card p {
+        margin: 10px 0;
+    }
+    
+    .report-card .button {
+        display: inline-block;
+        padding: 8px 16px;
+        background: #79aec8;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+    
+    .report-card .button:hover {
+        background: #609ab6;
+    }
+    
+    .filter-section {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .filter-section label {
+        display: inline-block;
+        margin-right: 10px;
+        font-weight: bold;
+    }
+    
+    .filter-section input,
+    .filter-section select {
+        margin-right: 20px;
+        padding: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>ShopSmart Reports</h1>
+
+<div class="filter-section">
+    <form method="get" action="">
+        <label for="date_from">From:</label>
+        <input type="date" id="date_from" name="date_from" value="{{ request.GET.date_from }}">
+        
+        <label for="date_to">To:</label>
+        <input type="date" id="date_to" name="date_to" value="{{ request.GET.date_to }}">
+        
+        <label for="family">Family:</label>
+        <select id="family" name="family">
+            <option value="">All Families</option>
+            {% for family in families %}
+            <option value="{{ family.id }}" {% if request.GET.family == family.id|stringformat:"s" %}selected{% endif %}>
+                {{ family.name }}
+            </option>
+            {% endfor %}
+        </select>
+        
+        <input type="submit" value="Filter" class="button">
+    </form>
+</div>
+
+<div class="report-section">
+    <h2>Available Reports</h2>
+    
+    <div class="report-grid">
+        <div class="report-card">
+            <h3>User Activity Report</h3>
+            <p>View user login frequency, shopping list creation, and item additions.</p>
+            <a href="{% url 'admin:admin_export_data' %}?type=users" class="button">Generate User Report</a>
+        </div>
+        
+        <div class="report-card">
+            <h3>Shopping Trends Report</h3>
+            <p>Analyze popular items, purchase frequency, and seasonal trends.</p>
+            <a href="{% url 'admin:admin_export_data' %}?type=shopping_trends" class="button">Generate Trends Report</a>
+        </div>
+        
+        <div class="report-card">
+            <h3>Store Performance Report</h3>
+            <p>Compare store usage, product availability, and pricing.</p>
+            <a href="{% url 'admin:admin_export_data' %}?type=stores" class="button">Generate Store Report</a>
+        </div>
+        
+        <div class="report-card">
+            <h3>Family Usage Report</h3>
+            <p>Track family shopping patterns, favorite items, and spending.</p>
+            <a href="{% url 'admin:admin_export_data' %}?type=families" class="button">Generate Family Report</a>
+        </div>
+        
+        <div class="report-card">
+            <h3>Product Catalog Report</h3>
+            <p>Export complete product catalog with categories and pricing.</p>
+            <a href="{% url 'admin:admin_export_data' %}?type=products" class="button">Generate Product Report</a>
+        </div>
+        
+        <div class="report-card">
+            <h3>Price Analysis Report</h3>
+            <p>Compare product prices across stores and track price changes.</p>
+            <a href="{% url 'admin:admin_export_data' %}?type=prices" class="button">Generate Price Report</a>
+        </div>
+    </div>
+</div>
+
+<div class="report-section">
+    <h2>Quick Stats</h2>
+    <div id="stats-container">
+        <!-- Stats will be loaded here via AJAX -->
+        <p>Loading statistics...</p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load quick stats via AJAX
+    fetch('/admin/api/stats/')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('stats-container');
+            let html = '<div class="report-grid">';
+            
+            if (data.total_users !== undefined) {
+                html += `
+                    <div class="report-card">
+                        <h3>Users</h3>
+                        <p><strong>Total Users:</strong> ${data.total_users}</p>
+                        <p><strong>Active Today:</strong> ${data.active_today}</p>
+                        <p><strong>New This Week:</strong> ${data.new_this_week}</p>
+                    </div>
+                `;
+            }
+            
+            if (data.shopping_stats !== undefined) {
+                html += `
+                    <div class="report-card">
+                        <h3>Shopping Activity</h3>
+                        <p><strong>Lists Created Today:</strong> ${data.shopping_stats.lists_today}</p>
+                        <p><strong>Items Added Today:</strong> ${data.shopping_stats.items_today}</p>
+                        <p><strong>Avg Items Per List:</strong> ${data.shopping_stats.avg_items_per_list}</p>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('stats-container').innerHTML = '<p>Error loading statistics.</p>';
+        });
+});
+</script>
+
+{% endblock %}

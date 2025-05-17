@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from shopping import views
+from shopping.admin import admin_site
 
 # Create a simple landing view function here to avoid circular imports
 from django.shortcuts import render, redirect
@@ -15,7 +16,7 @@ def landing_view(request):
     return render(request, 'landing.html')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin_site.urls),
     path('', landing_view, name='landing'),
     path('app/', include('shopping.urls')),
     

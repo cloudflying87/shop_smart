@@ -1,0 +1,229 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrastyle %}
+<style>
+    .dashboard-widget {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .quick-links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .quick-link {
+        display: block;
+        padding: 15px;
+        background: #f8f8f8;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #333;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-link:hover {
+        background: #e8e8e8;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .quick-link h3 {
+        margin: 0;
+        color: #333;
+    }
+    
+    .quick-link p {
+        margin: 5px 0 0;
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .module-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .module {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .module-header {
+        background: #79aec8;
+        color: white;
+        padding: 15px;
+        font-weight: bold;
+    }
+    
+    .module-content {
+        padding: 15px;
+    }
+    
+    .model-link {
+        display: block;
+        padding: 8px 0;
+        text-decoration: none;
+        color: #333;
+        transition: color 0.3s ease;
+    }
+    
+    .model-link:hover {
+        color: #79aec8;
+    }
+    
+    .stats-widget {
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .stat-number {
+        font-size: 48px;
+        font-weight: bold;
+        color: #79aec8;
+    }
+    
+    .stat-label {
+        font-size: 18px;
+        color: #666;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>ShopSmart Admin Dashboard</h1>
+
+<div class="dashboard-widget">
+    <h2>Quick Actions</h2>
+    <div class="quick-links">
+        <a href="{% url 'admin:admin_dashboard' %}" class="quick-link">
+            <h3>📊 Dashboard</h3>
+            <p>View statistics and recent activity</p>
+        </a>
+        
+        <a href="{% url 'admin:admin_reports' %}" class="quick-link">
+            <h3>📈 Reports</h3>
+            <p>Generate and download reports</p>
+        </a>
+        
+        <a href="{% url 'admin:shopping_shoppinglist_add' %}" class="quick-link">
+            <h3>➕ New Shopping List</h3>
+            <p>Create a new shopping list</p>
+        </a>
+        
+        <a href="{% url 'admin:shopping_groceryitem_add' %}" class="quick-link">
+            <h3>🛒 Add Product</h3>
+            <p>Add a new product to the catalog</p>
+        </a>
+        
+        <a href="{% url 'admin:shopping_family_add' %}" class="quick-link">
+            <h3>👨‍👩‍👧 New Family</h3>
+            <p>Create a new family group</p>
+        </a>
+        
+        <a href="{% url 'admin:shopping_grocerystore_add' %}" class="quick-link">
+            <h3>🏪 Add Store</h3>
+            <p>Add a new grocery store</p>
+        </a>
+    </div>
+</div>
+
+<div class="module-list">
+    <div class="module">
+        <div class="module-header">User Management</div>
+        <div class="module-content">
+            <a href="{% url 'admin:shopping_userprofile_changelist' %}" class="model-link">User Profiles</a>
+            <a href="{% url 'admin:shopping_family_changelist' %}" class="model-link">Families</a>
+            <a href="{% url 'admin:shopping_familymember_changelist' %}" class="model-link">Family Members</a>
+        </div>
+    </div>
+    
+    <div class="module">
+        <div class="module-header">Shopping Lists</div>
+        <div class="module-content">
+            <a href="{% url 'admin:shopping_shoppinglist_changelist' %}" class="model-link">Shopping Lists</a>
+            <a href="{% url 'admin:shopping_shoppinglistitem_changelist' %}" class="model-link">List Items</a>
+            <a href="{% url 'admin:shopping_familyitemusage_changelist' %}" class="model-link">Item Usage</a>
+        </div>
+    </div>
+    
+    <div class="module">
+        <div class="module-header">Products & Stores</div>
+        <div class="module-content">
+            <a href="{% url 'admin:shopping_groceryitem_changelist' %}" class="model-link">Products</a>
+            <a href="{% url 'admin:shopping_productcategory_changelist' %}" class="model-link">Categories</a>
+            <a href="{% url 'admin:shopping_grocerystore_changelist' %}" class="model-link">Stores</a>
+            <a href="{% url 'admin:shopping_storelocation_changelist' %}" class="model-link">Store Locations</a>
+            <a href="{% url 'admin:shopping_itemstoreinfo_changelist' %}" class="model-link">Product Pricing</a>
+        </div>
+    </div>
+    
+    <div class="module">
+        <div class="module-header">System</div>
+        <div class="module-content">
+            <a href="{% url 'admin:shopping_synclog_changelist' %}" class="model-link">Sync Logs</a>
+            <a href="{% url 'admin:admin_export_data' %}" class="model-link">Export Data</a>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-widget">
+    <h2>Quick Stats</h2>
+    <div class="quick-links">
+        <div class="stats-widget">
+            <div class="stat-number" id="active-lists">-</div>
+            <div class="stat-label">Active Lists</div>
+        </div>
+        
+        <div class="stats-widget">
+            <div class="stat-number" id="users-today">-</div>
+            <div class="stat-label">Active Users Today</div>
+        </div>
+        
+        <div class="stats-widget">
+            <div class="stat-number" id="items-added">-</div>
+            <div class="stat-label">Items Added Today</div>
+        </div>
+        
+        <div class="stats-widget">
+            <div class="stat-number" id="lists-completed">-</div>
+            <div class="stat-label">Lists Completed Today</div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fetch quick stats
+    fetch('/admin/dashboard/')
+        .then(response => response.text())
+        .then(html => {
+            // Parse stats from dashboard response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Update stat numbers
+            const activeLists = doc.querySelector('.stat-card:nth-child(6) .number');
+            if (activeLists) {
+                document.getElementById('active-lists').textContent = activeLists.textContent;
+            }
+        });
+});
+</script>
+
+{% endblock %}
