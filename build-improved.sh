@@ -105,7 +105,7 @@ echo "-----------------------------------"
 # Backup database
 if [ "$BACKUP_data" = true ]; then
     echo "Taking data only SQL up database with data only: $USER_DATE"
-    sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -a -O -T django_migrations -f /media/shop_smartbackup_${USER_DATE}_data.sql 
+    sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -a -O -T django_migrations --disable-triggers -f /media/shop_smartbackup_${USER_DATE}_data.sql 
     sudo docker cp shop_smart-db-1:/media/shop_smartbackup_${USER_DATE}_data.sql /media/ 
     # Create directory if it doesn't exist
     ssh $REMOTE_SERVER "mkdir -p $REMOTE_BACKUP_DIR"
@@ -115,7 +115,7 @@ fi
 # Copy backup files from container to host
 if [ "$BACKUP_all" = true ]; then
     echo "Backing up and copying all data. $USER_DATE"
-    sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -a -O -T django_migrations -f /media/shop_smartbackup_${USER_DATE}_data.sql 
+    sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -a -O -T django_migrations --disable-triggers -f /media/shop_smartbackup_${USER_DATE}_data.sql 
     sudo docker cp shop_smart-db-1:/media/shop_smartbackup_${USER_DATE}_data.sql /media/ 
     
 
@@ -166,7 +166,7 @@ if [ "$SOFT_REBUILD" = true ]; then
     
     # First, backup the database
     echo "Backing up database with date: $USER_DATE"
-    sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -a -O -T django_migrations -f /media/shop_smartbackup_${USER_DATE}_data_soft.sql 
+    sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -a -O -T django_migrations --disable-triggers -f /media/shop_smartbackup_${USER_DATE}_data_soft.sql 
     sudo docker cp shop_smart-db-1:/media/shop_smartbackup_${USER_DATE}_data_soft.sql /media/ 
     
     # Also create a full backup for safety
