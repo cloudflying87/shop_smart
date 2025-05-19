@@ -165,20 +165,16 @@ class FamilyMemberAdmin(admin.ModelAdmin):
 @admin.register(UserProfile, site=admin_site)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'default_family', 'dark_mode', 'lists_count', 'items_count', 'last_active')
-    list_filter = ('dark_mode', 'created_at')
+    list_filter = ('dark_mode',)
     search_fields = ('user__username', 'user__email', 'default_family__name')
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ()
     
     fieldsets = (
         ('User Information', {
             'fields': ('user', 'default_family')
         }),
         ('Preferences', {
-            'fields': ('dark_mode', 'dietary_preferences', 'allergens', 'avatar')
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
+            'fields': ('dark_mode', 'show_categories', 'dietary_preferences', 'allergens')
         }),
     )
     
@@ -200,26 +196,22 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(GroceryStore, site=admin_site)
 class GroceryStoreAdmin(admin.ModelAdmin):
-    list_display = ('name', 'display_logo', 'location_count', 'total_products', 'total_lists', 'is_active')
-    list_filter = ('is_active', 'approved_for_family_id', 'created_at')
+    list_display = ('name', 'display_logo', 'location_count', 'total_products', 'total_lists')
+    list_filter = ()
     search_fields = ('name', 'address')
     prepopulated_fields = {'slug': ('name',)}
-    readonly_fields = ('created_at', 'updated_at', 'display_logo_large')
+    readonly_fields = ('display_logo_large',)
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'slug', 'address', 'is_active')
+            'fields': ('name', 'slug', 'address', 'website')
         }),
         ('Media', {
-            'fields': ('logo', 'logo_url', 'display_logo_large'),
+            'fields': ('logo', 'display_logo_large'),
             'classes': ('collapse',)
         }),
         ('Family Association', {
-            'fields': ('approved_for_family_id',),
-            'classes': ('collapse',)
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
+            'fields': ('families',),
             'classes': ('collapse',)
         }),
     )
@@ -258,17 +250,7 @@ class GroceryStoreAdmin(admin.ModelAdmin):
         return "No logo"
     display_logo_large.short_description = 'Logo Preview'
     
-    actions = ['activate_stores', 'deactivate_stores']
-    
-    def activate_stores(self, request, queryset):
-        updated = queryset.update(is_active=True)
-        messages.success(request, f'{updated} stores activated.')
-    activate_stores.short_description = 'Activate selected stores'
-    
-    def deactivate_stores(self, request, queryset):
-        updated = queryset.update(is_active=False)
-        messages.success(request, f'{updated} stores deactivated.')
-    deactivate_stores.short_description = 'Deactivate selected stores'
+    # Remove actions that reference non-existent fields
 
 
 class StoreLocationInline(admin.TabularInline):
@@ -556,8 +538,8 @@ class ShoppingListAdmin(admin.ModelAdmin):
 @admin.register(ShoppingListItem, site=admin_site)
 class ShoppingListItemAdmin(admin.ModelAdmin):
     list_display = ('item', 'shopping_list', 'quantity', 'unit', 'checked', 'actual_price', 'price_status')
-    list_filter = ('checked', 'shopping_list__family', 'shopping_list__store', 'created_at')
-    search_fields = ('item__name', 'shopping_list__name', 'notes')
+    list_filter = ('checked', 'shopping_list__family', 'shopping_list__store')
+    search_fields = ('item__name', 'shopping_list__name', 'note')
     list_editable = ('checked', 'quantity', 'unit', 'actual_price')
     raw_id_fields = ('item', 'shopping_list')
     
