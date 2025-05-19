@@ -173,13 +173,6 @@ if [ "$SOFT_REBUILD" = true ]; then
     sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -O -T django_migrations -f /media/shop_smartbackup_${USER_DATE}_full_soft.sql 
     sudo docker cp shop_smart-db-1:/media/shop_smartbackup_${USER_DATE}_full_soft.sql /media/ 
     
-    # Transfer backups to remote server
-    echo "Transferring backup files to remote server"
-    # Create directory if it doesn't exist
-    ssh $REMOTE_SERVER "mkdir -p $REMOTE_BACKUP_DIR"
-    scp /media/shop_smartbackup_${USER_DATE}_data_soft.sql $REMOTE_SERVER:$REMOTE_BACKUP_DIR/
-    scp /media/shop_smartbackup_${USER_DATE}_full_soft.sql $REMOTE_SERVER:$REMOTE_BACKUP_DIR/
-    
     echo "Stopping and removing containers (keeping database)"
     sudo docker stop shop_smart-web-1 
     sudo docker stop shop_smart-nginx-1 
