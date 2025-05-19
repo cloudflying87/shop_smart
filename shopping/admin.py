@@ -7,6 +7,8 @@ from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
+from django.contrib.admin.views.decorators import staff_member_required
+from django.utils.decorators import method_decorator
 import csv
 from datetime import datetime, timedelta
 
@@ -24,6 +26,7 @@ class ShopSmartAdminSite(admin.AdminSite):
     
     def get_urls(self):
         urls = super().get_urls()
+        from django.urls import path
         custom_urls = [
             path('dashboard/', self.admin_view(self.dashboard_view), name='admin_dashboard'),
             path('reports/', self.admin_view(self.reports_view), name='admin_reports'),
@@ -119,18 +122,21 @@ class FamilyAdmin(admin.ModelAdmin):
     
     def get_urls(self):
         urls = super().get_urls()
-        custom_urls = [
-            path('<int:family_id>/stats/', self.admin_view(self.family_stats_view), name='family_stats'),
+        my_urls = [
+            path('<int:family_id>/stats/', 
+                self.admin_site.admin_view(self.family_stats_view), 
+                name='family_stats'),
         ]
-        return custom_urls + urls
+        return my_urls + urls
     
+    @method_decorator(staff_member_required)
     def family_stats_view(self, request, family_id):
         family = Family.objects.get(pk=family_id)
-        context = {
-            'family': family,
-            'title': f'Statistics for {family.name}',
-            # Add more statistics here
-        }
+        context = dict(
+            self.admin_site.each_context(request),
+            family=family,
+            title=f'Statistics for {family.name}',
+        )
         return TemplateResponse(request, 'admin/family_stats.html', context)
 
 
