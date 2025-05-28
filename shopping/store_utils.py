@@ -11,7 +11,8 @@ def create_default_store_locations(store):
 
     # Define common store locations with reasonable sort order
     default_locations = [
-        {"name": "Produce", "sort_order": 10},
+        {"name": "Fruits", "sort_order": 10},
+        {"name": "Vegetables", "sort_order": 15},
         {"name": "Dairy", "sort_order": 20},
         {"name": "Meat", "sort_order": 30},
         {"name": "Seafood", "sort_order": 40},
@@ -23,6 +24,7 @@ def create_default_store_locations(store):
         {"name": "Snacks", "sort_order": 100},
         {"name": "Breakfast", "sort_order": 110},
         {"name": "Baking", "sort_order": 120},
+        {"name": "Spices", "sort_order": 125},
         {"name": "Condiments", "sort_order": 130},
         {"name": "Beverages", "sort_order": 140},
         {"name": "Frozen Foods", "sort_order": 150},
@@ -332,8 +334,8 @@ def find_matching_store_location(item, store):
     # Map of category names to common store section names
     category_to_location_map = {
         # Produce-related
-        'Vegetables': ['Produce', 'Fruits & Vegetables', 'Fresh Produce'],
-        'Fruits': ['Produce', 'Fruits & Vegetables', 'Fresh Produce'],
+        'Vegetables': ['Vegetables', 'Produce', 'Fruits & Vegetables', 'Fresh Produce'],
+        'Fruits': ['Fruits', 'Produce', 'Fruits & Vegetables', 'Fresh Produce'],
         
         # Dairy-related
         'Dairy': ['Dairy', 'Refrigerated'],
@@ -347,6 +349,9 @@ def find_matching_store_location(item, store):
         
         # Pantry-related
         'Pantry': ['Dry Goods', 'Canned Goods', 'Pasta & Rice'],
+        
+        # Spices-related
+        'Spices': ['Spices', 'Seasonings', 'Spices & Seasonings', 'Baking', 'Condiments'],
         
         # Snacks-related
         'Snacks': ['Snacks', 'Chips & Crackers'],
