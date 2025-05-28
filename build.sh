@@ -152,7 +152,7 @@ if [ "$REBUILD" = true ]; then
     sudo docker volume remove shop_smart_media_volume
     sudo docker volume prune -f
     echo "Starting containers"
-    sudo docker compose up -d 
+    sudo docker compose up -d --no-cache
     echo "Running Django migrations"
     sudo docker compose -f docker-compose.yml exec web python manage.py collectstatic --noinput
     sudo docker compose -f docker-compose.yml exec web python manage.py makemigrations 
