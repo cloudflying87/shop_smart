@@ -6,18 +6,28 @@ from shopping.models import GroceryItem, ProductCategory
 class Command(BaseCommand):
     help = 'Add basic grocery items without brands'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--update-categories',
+            action='store_true',
+            help='Update categories for existing items without affecting store associations'
+        )
+
     def handle(self, *args, **options):
         # Define basic food categories and items
         basic_items = {
-            'Vegetables': [
+            'Fruits': [
                 'Apples', 'Oranges', 'Bananas', 'Grapes', 'Strawberries', 'Blueberries',
                 'Raspberries', 'Blackberries', 'Pineapple', 'Watermelon', 'Cantaloupe',
                 'Honeydew', 'Kiwi', 'Mango', 'Peaches', 'Plums', 'Pears', 'Cherries',
-                'Avocados', 'Tomatoes', 'Potatoes', 'Sweet Potatoes', 'Carrots', 'Onions',
+                'Avocados', 'Lemons', 'Limes'
+            ],
+            'Vegetables': [
+                'Tomatoes', 'Potatoes', 'Sweet Potatoes', 'Carrots', 'Onions',
                 'Broccoli', 'Cauliflower', 'Spinach', 'Kale', 'Lettuce', 'Cabbage',
                 'Bell Peppers', 'Mushrooms', 'Garlic', 'Ginger', 'Cucumber', 'Zucchini',
-                'Celery', 'Green Beans', 'Corn', 'Radishes', 'Lemons', 'Limes', 'Green Onions',
-                'Asparagus', 'Eggplant', 'Brussels Sprouts', 'Squash', 'Artichokes', 'Beets','Lettuce'
+                'Celery', 'Green Beans', 'Corn', 'Radishes', 'Green Onions',
+                'Asparagus', 'Eggplant', 'Brussels Sprouts', 'Squash', 'Artichokes', 'Beets'
             ],
             'Dairy': [
                 'Milk', 'Butter', 'Eggs', 'Yogurt', 'Cheese', 'Cottage Cheese', 'Cream Cheese',
@@ -44,16 +54,39 @@ class Command(BaseCommand):
                 'Cinnamon Rolls', 'Coffee Cake', 'Crackers', 'Bread Crumbs', 'Croutons',
                 'Dinner Rolls', 'Cornbread', 'Sourdough Bread', 'Rye Bread', 'Whole Wheat Bread'
             ],
+            'Spices': [
+                'Salt', 'Black Pepper', 'Garlic Powder', 'Onion Powder', 'Paprika',
+                'Cayenne Pepper', 'Chili Powder', 'Cumin', 'Oregano', 'Basil',
+                'Thyme', 'Rosemary', 'Sage', 'Bay Leaves', 'Cinnamon', 'Nutmeg',
+                'Ginger Powder', 'Turmeric', 'Coriander', 'Cardamom', 'Cloves',
+                'Allspice', 'Mustard Powder', 'Curry Powder', 'Italian Seasoning',
+                'Taco Seasoning', 'Cajun Seasoning', 'Everything Bagel Seasoning',
+                'Sesame Seeds', 'Poppy Seeds', 'Fennel Seeds', 'Crushed Red Pepper',
+                'White Pepper', 'Smoked Paprika', 'Dill', 'Parsley', 'Cilantro',
+                'Mint', 'Vanilla Extract', 'Almond Extract', 'Lemon Extract',
+                'Sweet Paprika', 'Smoked Peppercorns', 'Guajillo Chili Peppers',
+                'Gochugaru', 'Black Garlic', 'Stir-Fry Seasoning', 'Buffalo Seasoning',
+                'Breakfast Sausage Seasoning', 'BBQ Seasoning', 'Ranch Seasoning',
+                'Chipotle Powder', 'Ancho Chili Powder', 'Garlic Salt', 'Onion Salt',
+                'Celery Salt', 'Seasoned Salt', 'Lemon Pepper', 'Montreal Steak Seasoning',
+                'Old Bay Seasoning', 'Poultry Seasoning', 'Pumpkin Pie Spice',
+                'Apple Pie Spice', 'Chinese Five Spice', 'Herbes de Provence',
+                'Za\'atar', 'Sumac', 'Harissa', 'Ras el Hanout', 'Garam Masala',
+                'Tandoori Masala', 'Curry Leaves', 'Fenugreek', 'Nigella Seeds',
+                'Star Anise', 'Juniper Berries', 'Mace', 'Long Pepper', 'Pink Peppercorns',
+                'Szechuan Peppercorns', 'Chili Flakes', 'Chipotle Flakes', 'Smoked Salt',
+                'Himalayan Pink Salt', 'Sea Salt', 'Kosher Salt', 'Flaky Sea Salt'
+            ],
             'Pantry': [
-                'Rice', 'Pasta', 'Flour', 'Sugar', 'Salt', 'Pepper', 'Cooking Oil',
+                'Rice', 'Pasta', 'Flour', 'Sugar', 'Cooking Oil',
                 'Olive Oil', 'Vinegar', 'Soy Sauce', 'Ketchup', 'Mustard', 'Mayonnaise',
                 'Peanut Butter', 'Jelly', 'Honey', 'Maple Syrup', 'Coffee', 'Tea',
                 'Cereal', 'Oatmeal', 'Pancake Mix', 'Canned Soup', 'Canned Beans',
                 'Canned Tuna', 'Canned Tomatoes', 'Tomato Sauce', 'Pasta Sauce',
-                'Chicken Broth', 'Beef Broth', 'Vegetable Broth', 'Spices', 'Hot Sauce',
+                'Chicken Broth', 'Beef Broth', 'Vegetable Broth', 'Hot Sauce',
                 'BBQ Sauce', 'Salsa', 'Salad Dressing', 'Pickles', 'Olives', 'Jam',
                 'Canned Corn', 'Canned Fruit', 'Granola', 'Baking Powder', 'Baking Soda',
-                'Vanilla Extract', 'Chocolate Chips', 'Brown Sugar', 'Powdered Sugar'
+                'Chocolate Chips', 'Brown Sugar', 'Powdered Sugar'
             ],
             'Snacks': [
                 'Potato Chips', 'Tortilla Chips', 'Pretzels', 'Popcorn', 'Crackers',
@@ -133,3 +166,51 @@ class Command(BaseCommand):
                 self.stdout.write(f"Added item: {item_name} ({category_name})")
         
         self.stdout.write(self.style.SUCCESS(f"Successfully added {item_count} basic grocery items"))
+        
+        # Handle category updates if requested
+        if options.get('update_categories'):
+            self.update_existing_categories(basic_items)
+    
+    def update_existing_categories(self, basic_items):
+        """Update categories for existing items without affecting store associations"""
+        self.stdout.write("Updating categories for existing items...")
+        update_count = 0
+        
+        for category_name, items in basic_items.items():
+            # Get or create the category
+            category, created = ProductCategory.objects.get_or_create(
+                name=category_name,
+                defaults={'sort_order': 0}
+            )
+            
+            # Update items that exist but may have wrong category
+            for item_name in items:
+                try:
+                    item = GroceryItem.objects.get(name=item_name)
+                    if item.category.name != category_name:
+                        old_category = item.category.name
+                        item.category = category
+                        item.save()
+                        update_count += 1
+                        self.stdout.write(
+                            f"Updated '{item_name}' from category '{old_category}' to '{category_name}'"
+                        )
+                except GroceryItem.DoesNotExist:
+                    # Item doesn't exist, skip it
+                    pass
+                except GroceryItem.MultipleObjectsReturned:
+                    # Multiple items with same name, update all
+                    items_to_update = GroceryItem.objects.filter(name=item_name)
+                    for item in items_to_update:
+                        if item.category.name != category_name:
+                            old_category = item.category.name
+                            item.category = category
+                            item.save()
+                            update_count += 1
+                            self.stdout.write(
+                                f"Updated '{item_name}' (ID: {item.id}) from category '{old_category}' to '{category_name}'"
+                            )
+        
+        self.stdout.write(
+            self.style.SUCCESS(f"Successfully updated {update_count} items to new categories")
+        )
