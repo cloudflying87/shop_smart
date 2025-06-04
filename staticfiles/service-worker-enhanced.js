@@ -4,7 +4,7 @@
  */
 
 // Cache names - incrementing versions forces cache refresh on updates
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const STATIC_CACHE = `shopsmart-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `shopsmart-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `shopsmart-api-${CACHE_VERSION}`;

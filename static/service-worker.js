@@ -4,10 +4,10 @@
  */
 
 // Cache names - incrementing versions forces cache refresh on updates
-const STATIC_CACHE = 'shopsmart-static-v3';
-const DYNAMIC_CACHE = 'shopsmart-dynamic-v3';
-const API_CACHE = 'shopsmart-api-v3';
-const IMAGE_CACHE = 'shopsmart-images-v3';
+const STATIC_CACHE = 'shopsmart-static-v4';
+const DYNAMIC_CACHE = 'shopsmart-dynamic-v4';
+const API_CACHE = 'shopsmart-api-v4';
+const IMAGE_CACHE = 'shopsmart-images-v4';
 
 // Resources to cache immediately on install
 const STATIC_ASSETS = [
