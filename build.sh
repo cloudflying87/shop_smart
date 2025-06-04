@@ -105,6 +105,15 @@ echo "-----------------------------------"
 # Backup database
 if [ "$BACKUP_data" = true ]; then
     echo "Taking data only SQL up database with data only: $USER_DATE"
+    
+    # Ensure containers are running
+    echo "Starting containers if not running..."
+    sudo docker compose up -d
+    
+    # Wait for database to be ready
+    echo "Waiting for database to be ready..."
+    sleep 10
+    
     sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -a -O -T django_migrations --disable-triggers -f /media/shop_smartbackup_${USER_DATE}_data.sql 
     sudo docker cp shop_smart-db-1:/media/shop_smartbackup_${USER_DATE}_data.sql /media/ 
     # Create directory if it doesn't exist
@@ -115,6 +124,15 @@ fi
 # Copy backup files from container to host
 if [ "$BACKUP_all" = true ]; then
     echo "Backing up and copying all data. $USER_DATE"
+    
+    # Ensure containers are running
+    echo "Starting containers if not running..."
+    sudo docker compose up -d
+    
+    # Wait for database to be ready
+    echo "Waiting for database to be ready..."
+    sleep 10
+    
     sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -a -O -T django_migrations --disable-triggers -f /media/shop_smartbackup_${USER_DATE}_data.sql 
     sudo docker cp shop_smart-db-1:/media/shop_smartbackup_${USER_DATE}_data.sql /media/ 
     
@@ -164,6 +182,14 @@ fi
 if [ "$SOFT_REBUILD" = true ]; then
     echo "Starting soft rebuild - backing up database and rebuilding app"
     
+    # Ensure containers are running for backup
+    echo "Starting containers if not running..."
+    sudo docker compose up -d
+    
+    # Wait for database to be ready
+    echo "Waiting for database to be ready..."
+    sleep 10
+    
     # First, backup the database
     echo "Backing up database with date: $USER_DATE"
     sudo docker exec -it shop_smart-db-1 pg_dump -U shop_smart_user shop_smart -a -O -T django_migrations --disable-triggers -f /media/shop_smartbackup_${USER_DATE}_data_soft.sql 
@@ -199,6 +225,15 @@ fi
 # Restore database
 if [ "$RESTORE" = true ]; then
     echo "Restoring database from backup"
+    
+    # Ensure containers are running
+    echo "Starting containers if not running..."
+    sudo docker compose up -d
+    
+    # Wait for database to be ready
+    echo "Waiting for database to be ready..."
+    sleep 10
+    
     sudo docker cp /media/shop_smartbackup_${USER_DATE}_data.sql shop_smart-db-1:/media 
     sudo docker exec -it shop_smart-db-1 psql -d shop_smart -U shop_smart_user -f /media/shop_smartbackup_${USER_DATE}_data.sql 
 fi

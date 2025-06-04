@@ -147,6 +147,12 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Skip localhost/127.0.0.1 requests in development to avoid HTTPS issues
+  const url = new URL(event.request.url);
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname.includes('0.0.0.0')) {
+    return;
+  }
+
   const strategy = getCacheStrategy(event.request);
   
   // Apply appropriate caching strategy
