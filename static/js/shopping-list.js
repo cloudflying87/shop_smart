@@ -319,21 +319,24 @@ $(document).ready(function() {
         if (!document.querySelector('.select2-no-results-action')) {
             $('.select2-dropdown').append(
                 `<div class="select2-no-results-action" style="display:none; padding: 10px; text-align: center; border-top: 1px solid #ddd;">
-                    <a href="/app/items/create/?list=${$('#shopping-list').data('list-id')}&family=${$('#item-select').data('family-id')}" class="btn btn-sm btn-primary">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="openAddProductModal()">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" style="margin-right: 5px; vertical-align: text-bottom;">
                             <path fill="none" d="M0 0h24v24H0z"/>
                             <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" fill="currentColor"/>
                         </svg>
-                        Create New Item
-                    </a>
+                        Create New Product
+                    </button>
                 </div>`
             );
             
             // Show the action link when no results found
             $(document).on('keyup', '.select2-search__field', function() {
+                const searchTerm = $(this).val();
                 setTimeout(function() {
                     if ($('.select2-results__message').length > 0) {
                         $('.select2-no-results-action').show();
+                        // Store the search term for the modal
+                        $('.select2-no-results-action').data('search-term', searchTerm);
                     } else {
                         $('.select2-no-results-action').hide();
                     }
@@ -636,4 +639,123 @@ $(document).ready(function() {
             ?.split('=')[1];
         return cookieValue;
     }
+    
+    // Add Product Modal Functions
+    window.openAddProductModal = function() {
+        // Get the search term from the stored data or the search field
+        let searchTerm = $('.select2-no-results-action').data('search-term') || $('.select2-search__field').val();
+        
+        // Close the Select2 dropdown first
+        $('#item-select').select2('close');
+        
+        // Clear form and reset to defaults
+        $('#add-product-form')[0].reset();
+        
+        // Pre-fill the product name with the search term if available
+        if (searchTerm && searchTerm.trim()) {
+            $('#product-name').val(searchTerm.trim());
+        }
+        
+        $('#add-to-list').prop('checked', true);
+        
+        // Show the modal
+        $('#add-product-modal').addClass('active');
+        
+        // Focus on the first empty required field
+        setTimeout(() => {
+            if (!searchTerm || !searchTerm.trim()) {
+                $('#product-name').focus();
+            } else {
+                $('#product-category').focus();
+            }
+        }, 100);
+    };
+    
+    // Close modal functionality
+    $(document).on('click', '#add-product-modal .modal-close, #add-product-modal [data-dismiss="modal"]', function() {
+        $('#add-product-modal').removeClass('active');
+    });
+    
+    // Close modal when clicking outside
+    $(document).on('click', '#add-product-modal .modal-overlay', function() {
+        $('#add-product-modal').removeClass('active');
+    });
+    
+    // Save product functionality
+    $(document).on('click', '#save-product-btn', function() {
+        const form = $('#add-product-form')[0];
+        const saveBtn = $(this);
+        
+        // Validate required fields
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        
+        // Show loading state
+        saveBtn.find('.btn-text').hide();
+        saveBtn.find('.btn-loading').show();
+        saveBtn.prop('disabled', true);
+        
+        // Prepare form data
+        const formData = {
+            name: $('#product-name').val(),
+            brand: $('#product-brand').val(),
+            category: $('#product-category').val(),
+            description: $('#product-description').val(),
+            barcode: $('#product-barcode').val(),
+            image_url: $('#product-image-url').val(),
+            add_to_list: $('#add-to-list').is(':checked'),
+            list_id: $('#shopping-list').data('list-id')
+        };
+        
+        // Submit via AJAX
+        $.ajax({
+            url: '/api/items/create/',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(formData),
+            success: function(response) {
+                // Close modal
+                $('#add-product-modal').removeClass('active');
+                
+                // Show success message
+                toastNotification(`Product "${formData.name}" created successfully!`, 'success');
+                
+                // If "add to list" was checked, add it to the current list
+                if (formData.add_to_list && response.list_item) {
+                    // Refresh the page to show the new item in the list
+                    window.location.reload();
+                } else {
+                    // Just clear the search and show the new item is available
+                    $('#item-select').val(null).trigger('change');
+                    $('#item-select').select2('open');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error creating product:', error);
+                let errorMessage = 'Failed to create product. ';
+                
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage += xhr.responseJSON.error;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    const errors = Object.values(xhr.responseJSON.errors).flat();
+                    errorMessage += errors.join(', ');
+                } else {
+                    errorMessage += 'Please try again.';
+                }
+                
+                toastNotification(errorMessage, 'error');
+            },
+            complete: function() {
+                // Reset loading state
+                saveBtn.find('.btn-text').show();
+                saveBtn.find('.btn-loading').hide();
+                saveBtn.prop('disabled', false);
+            }
+        });
+    });
 });

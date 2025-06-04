@@ -360,6 +360,10 @@ class ShoppingListDetailView(LoginRequiredMixin, DetailView):
         context['checked_items'] = list_items.filter(checked=True).count()
         context['list_items'] = list_items  # Original queryset for reference
         context['store_locations'] = StoreLocation.objects.filter(store=shopping_list.store).order_by('sort_order')
+        
+        # Add categories for the add product modal
+        context['categories'] = ProductCategory.objects.all().order_by('name')
+        
         return context
 
 class ShoppingListUpdateView(LoginRequiredMixin, UpdateView):
@@ -1158,6 +1162,106 @@ class GroceryItemSearchView(LoginRequiredMixin, View):
             
         except (Family.DoesNotExist, GroceryStore.DoesNotExist):
             return JsonResponse({'error': 'Invalid family or store ID'}, status=400)
+
+class GroceryItemCreateAPIView(LoginRequiredMixin, View):
+    """API endpoint for creating new grocery items via AJAX"""
+    
+    def post(self, request):
+        try:
+            import json
+            data = json.loads(request.body)
+            
+            # Validate required fields
+            name = data.get('name', '').strip()
+            category_id = data.get('category')
+            
+            if not name:
+                return JsonResponse({'error': 'Product name is required'}, status=400)
+            
+            if not category_id:
+                return JsonResponse({'error': 'Category is required'}, status=400)
+            
+            # Check if product already exists
+            existing_item = GroceryItem.objects.filter(
+                name__iexact=name,
+                brand__iexact=data.get('brand', '') or None
+            ).first()
+            
+            if existing_item:
+                return JsonResponse({
+                    'error': f'Product "{name}" already exists.',
+                    'existing_item_id': existing_item.id
+                }, status=400)
+            
+            # Get category
+            try:
+                category = ProductCategory.objects.get(id=category_id)
+            except ProductCategory.DoesNotExist:
+                return JsonResponse({'error': 'Invalid category'}, status=400)
+            
+            # Create the grocery item
+            grocery_item = GroceryItem.objects.create(
+                name=name,
+                brand=data.get('brand', '') or None,
+                category=category,
+                description=data.get('description', '') or None,
+                barcode=data.get('barcode', '') or None,
+                image_url=data.get('image_url', '') or None,
+                is_user_added=True,
+                is_verified=False,  # User-added items need verification
+                global_popularity=0
+            )
+            
+            # If user wants to add to current list, do that
+            list_item = None
+            if data.get('add_to_list') and data.get('list_id'):
+                try:
+                    shopping_list = ShoppingList.objects.get(
+                        id=data.get('list_id'),
+                        family__members__user=request.user
+                    )
+                    
+                    # Check if item is already in the list
+                    existing_list_item = ShoppingListItem.objects.filter(
+                        list=shopping_list,
+                        item=grocery_item
+                    ).first()
+                    
+                    if not existing_list_item:
+                        list_item = ShoppingListItem.objects.create(
+                            list=shopping_list,
+                            item=grocery_item,
+                            quantity=1,
+                            unit='each',
+                            added_by=request.user
+                        )
+                        
+                except ShoppingList.DoesNotExist:
+                    pass  # Just skip adding to list if list doesn't exist
+            
+            return JsonResponse({
+                'success': True,
+                'item': {
+                    'id': grocery_item.id,
+                    'name': grocery_item.name,
+                    'brand': grocery_item.brand,
+                    'category': grocery_item.category.name,
+                    'description': grocery_item.description,
+                },
+                'list_item': {
+                    'id': list_item.id,
+                    'quantity': list_item.quantity,
+                    'unit': list_item.unit
+                } if list_item else None,
+                'message': f'Product "{name}" created successfully!'
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
 
 # User Profile Views
 class UserProfileView(LoginRequiredMixin, DetailView):

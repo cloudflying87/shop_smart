@@ -22,6 +22,7 @@ urlpatterns = [
     
     # API endpoints that need to be at the root level
     path('api/items/search/', views.GroceryItemSearchView.as_view(), name='item_search'),
+    path('api/items/create/', views.GroceryItemCreateAPIView.as_view(), name='item_create_api'),
     path('api/items/barcode/<str:barcode>/', views.BarcodeSearchView.as_view(), name='barcode_search'),
     path('api/stores/search/', views.StoreSearchView.as_view(), name='store_search'),
     

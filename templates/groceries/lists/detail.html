@@ -437,6 +437,76 @@
         </div>
     </div>
 </div>
+
+<!-- Add Product Modal -->
+<div class="modal" id="add-product-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Add New Product</h2>
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="add-product-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="product-name">Product Name *</label>
+                    <input type="text" id="product-name" name="name" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="product-brand">Brand</label>
+                    <input type="text" id="product-brand" name="brand" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label for="product-category">Category *</label>
+                    <select id="product-category" name="category" class="form-control" required>
+                        <option value="">Select a category</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="product-description">Description</label>
+                    <textarea id="product-description" name="description" class="form-control" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="product-barcode">Barcode/UPC</label>
+                    <input type="text" id="product-barcode" name="barcode" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label for="product-image-url">Image URL</label>
+                    <input type="url" id="product-image-url" name="image_url" class="form-control">
+                </div>
+                
+                <div class="form-check">
+                    <input type="checkbox" id="add-to-list" name="add_to_list" class="form-check-input" checked>
+                    <label for="add-to-list" class="form-check-label">Add to current shopping list</label>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="save-product-btn">
+                <span class="btn-text">Save Product</span>
+                <span class="btn-loading" style="display: none;">
+                    <svg class="spinner" viewBox="0 0 50 50" width="16" height="16">
+                        <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="31.416">
+                            <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+                            <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+                        </circle>
+                    </svg>
+                    Saving...
+                </span>
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_css %}
