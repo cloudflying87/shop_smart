@@ -174,7 +174,7 @@ class UserProfileAdmin(admin.ModelAdmin):
             'fields': ('user', 'default_family')
         }),
         ('Preferences', {
-            'fields': ('dark_mode', 'show_categories', 'dietary_preferences', 'allergens')
+            'fields': ('dark_mode', 'show_categories')
         }),
     )
     
@@ -186,7 +186,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     lists_count.short_description = 'Lists Created'
     
     def items_count(self, obj):
-        return obj.user.created_items.count()
+        return obj.user.groceryitem_set.count()
     items_count.short_description = 'Items Added'
     
     def last_active(self, obj):
@@ -529,7 +529,7 @@ class ShoppingListAdmin(admin.ModelAdmin):
                     item=item.item,
                     quantity=item.quantity,
                     unit=item.unit,
-                    notes=item.notes
+                    note=item.note
                 )
         messages.success(request, f'{queryset.count()} lists duplicated.')
     duplicate_list.short_description = 'Duplicate selected lists'

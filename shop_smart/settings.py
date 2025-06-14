@@ -245,7 +245,7 @@ OPENFOODFACTS_USER_AGENT = get_env_variable('OPENFOODFACTS_USER_AGENT', 'ShopSma
 
 # Cloudflare settings
 CLOUDFLARE_TUNNEL_TOKEN = get_env_variable('CLOUDFLARE_TUNNEL_TOKEN', '', required=not DEBUG)
-print(DEBUG)
+
 
 # Security settings
 if not DEBUG:
