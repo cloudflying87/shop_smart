@@ -192,14 +192,37 @@ $(document).ready(function() {
         // Show immediate feedback
         toastNotification(`Adding ${itemName}...`);
         
+        // Get list ID from the container element
+        const listIdFromJQuery = $('#shopping-list').data('list-id');
+        const listIdFromVanilla = document.getElementById('shopping-list')?.dataset.listId;
+        const listId = listIdFromJQuery || listIdFromVanilla;
+        
+        console.log('Debug - jQuery list ID:', listIdFromJQuery);
+        console.log('Debug - Vanilla JS list ID:', listIdFromVanilla);
+        console.log('Debug - Final list ID:', listId);
+        
+        if (!listId) {
+            console.error('Unable to find list ID');
+            toastNotification('Error: Unable to find list ID', 'error');
+            pendingItems.delete(itemId);
+            return;
+        }
+        
         // Add directly to the list
-        fetch(`/app/lists/${$('#shopping-list').data('list-id')}/items/add/`, {
+        fetch(`/app/lists/${listId}/items/add/`, {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
             // Remove from pending map
             pendingItems.delete(itemId);
             
@@ -213,14 +236,16 @@ $(document).ready(function() {
                 }, 500);
             } else {
                 // Error adding item
-                toastNotification('Error adding item', 'error');
+                console.error('Server error:', data.error || 'Unknown error');
+                toastNotification(`Error adding item: ${data.error || 'Unknown error'}`, 'error');
             }
         })
         .catch(error => {
+            console.error('Network or parse error:', error);
             // Remove from pending map on error
             pendingItems.delete(itemId);
             // Handle error
-            toastNotification('Error adding item', 'error');
+            toastNotification(`Error adding item: ${error.message}`, 'error');
         });
     }
     

@@ -1,0 +1,198 @@
+{% extends 'groceries/base.html' %}
+
+{% block title %}Bulk Import Confirmation - ShopSmart{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Confirm Bulk Import: {{ list_name }}
+                </h4>
+                <a href="{% url 'groceries:bulk_import' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Found Items -->
+                    {% if found_items %}
+                    <div class="col-md-6">
+                        <div class="card border-success mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-check me-2"></i>
+                                    Items Found ({{ found_items|length }})
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group list-group-flush">
+                                    {% for item in found_items %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ item.input_name }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                Matched: {{ item.matched_item.name }}
+                                                {% if item.matched_item.brand %}
+                                                    ({{ item.matched_item.brand }})
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-success rounded-pill">
+                                            {{ item.score|floatformat:0 }}% match
+                                        </span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Not Found Items -->
+                    {% if not_found_items %}
+                    <div class="col-md-6">
+                        <div class="card border-warning mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Items Not Found ({{ not_found_items|length }})
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-3">
+                                    These items weren't found in our database. You can create them or skip them.
+                                </p>
+                                <form id="createItemsForm" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="create_missing">
+                                    
+                                    <div class="list-group list-group-flush">
+                                        {% for item in not_found_items %}
+                                        <div class="list-group-item">
+                                            <div class="mb-2">
+                                                <strong>{{ item.input_name }}</strong>
+                                                <br>
+                                                <small class="text-muted">Will be created as: "{{ item.suggested_name }}"</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label for="category_{{ item.input_name }}" class="form-label small">Category:</label>
+                                                <select name="category_{{ item.input_name }}" 
+                                                        id="category_{{ item.input_name }}" 
+                                                        class="form-select form-select-sm">
+                                                    <option value="">Select category...</option>
+                                                    {% for category in categories %}
+                                                    <option value="{{ category.id }}" 
+                                                            {% if item.suggested_category and item.suggested_category.id == category.id %}selected{% endif %}>
+                                                        {{ category.name }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    {% if found_items and not_found_items %}
+                        <!-- Both found and not found items -->
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="skip_missing">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-forward me-2"></i>
+                                Create List with Found Items Only
+                                <br>
+                                <small>(Skip {{ not_found_items|length }} missing items)</small>
+                            </button>
+                        </form>
+                        
+                        <button type="button" class="btn btn-success" onclick="document.getElementById('createItemsForm').submit();">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Create Missing Items & List
+                            <br>
+                            <small>(Create {{ not_found_items|length }} new items)</small>
+                        </button>
+                    {% elif found_items %}
+                        <!-- Only found items -->
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="skip_missing">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check me-2"></i>
+                                Create Shopping List
+                                <br>
+                                <small>({{ found_items|length }} items)</small>
+                            </button>
+                        </form>
+                    {% elif not_found_items %}
+                        <!-- Only not found items -->
+                        <button type="button" class="btn btn-success btn-lg" onclick="document.getElementById('createItemsForm').submit();">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Create All Items & List
+                            <br>
+                            <small>({{ not_found_items|length }} new items)</small>
+                        </button>
+                    {% endif %}
+                </div>
+
+                {% if not found_items %}
+                <div class="alert alert-info mt-4">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Tip:</strong> Selecting the right category helps organize your shopping list and makes items easier to find in the store.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for confirmation -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmButton">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add confirmation for skipping items
+    const skipButton = document.querySelector('button[onclick*="skip_missing"]');
+    if (skipButton) {
+        skipButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            const notFoundCount = {{ not_found_items|length|default:0 }};
+            if (notFoundCount > 0) {
+                if (confirm(`Are you sure you want to skip ${notFoundCount} items? They won't be added to your shopping list.`)) {
+                    this.closest('form').submit();
+                }
+            } else {
+                this.closest('form').submit();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

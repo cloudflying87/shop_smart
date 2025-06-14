@@ -14,6 +14,8 @@ urlpatterns = [
     # Shopping Lists
     path('lists/', views.ShoppingListListView.as_view(), name='lists'),
     path('lists/create/', views.ShoppingListCreateView.as_view(), name='create_list'),
+    path('lists/bulk-import/', views.BulkImportView.as_view(), name='bulk_import'),
+    path('lists/bulk-import/confirm/', views.BulkImportConfirmView.as_view(), name='bulk_import_confirm'),
     path('lists/<int:pk>/', views.ShoppingListDetailView.as_view(), name='list_detail'),
     path('lists/<int:pk>/edit/', views.ShoppingListUpdateView.as_view(), name='edit_list'),
     path('lists/<int:pk>/delete/', views.ShoppingListDeleteView.as_view(), name='delete_list'),

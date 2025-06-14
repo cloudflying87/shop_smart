@@ -311,6 +311,64 @@ class UserProfileForm(forms.ModelForm):
         )
 
 
+class BulkImportForm(forms.Form):
+    """Form for bulk importing items to a shopping list"""
+    name = forms.CharField(
+        max_length=100,
+        label="List Name",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter list name'})
+    )
+    family = forms.ModelChoiceField(
+        queryset=Family.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    store = forms.ModelChoiceField(
+        queryset=GroceryStore.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    items_text = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 8,
+            'placeholder': 'Enter items separated by commas or new lines:\n\napples, milk, bread, cheese\nbananas\norange juice\netc...'
+        }),
+        label="Items to Import",
+        help_text="Enter items separated by commas or new lines. You can also include quantities like '2 apples' or 'milk 1 gallon'"
+    )
+    
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Only show families the user belongs to
+        if self.user:
+            user_families = Family.objects.filter(members__user=self.user)
+            self.fields['family'].queryset = user_families
+            
+            # Stores available to the user's families
+            self.fields['store'].queryset = GroceryStore.objects.filter(
+                families__in=user_families
+            ).distinct()
+        
+        # Crispy forms setup
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Field('name', wrapper_class='form-group'),
+            Row(
+                Column(Field('family'), css_class='col-md-6'),
+                Column(Field('store'), css_class='col-md-6'),
+                css_class='form-row'
+            ),
+            Field('items_text', wrapper_class='form-group'),
+            Div(
+                Submit('submit', 'Import Items', css_class='btn btn-primary'),
+                HTML("<a href='{% url \"groceries:lists\" %}' class='btn btn-outline'>Cancel</a>"),
+                css_class='form-group mt-4'
+            )
+        )
+
+
 class UserRegistrationForm(UserCreationForm):
     """Form for user registration"""
     email = forms.EmailField(required=True)

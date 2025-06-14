@@ -26,8 +26,9 @@ from .models import (
 from .forms import (
     ShoppingListForm, FamilyForm, GroceryStoreForm, GroceryItemForm,
     StoreLocationForm, ShoppingListItemForm, UserProfileForm, FamilyMemberForm,
-    UserRegistrationForm
+    UserRegistrationForm, BulkImportForm
 )
+from .utils import parse_bulk_import_text, fuzzy_match_items
 from .recommender import ShoppingRecommender
 from .store_utils import (
     create_default_store_locations, get_common_store_data,
@@ -1995,5 +1996,286 @@ class UserRegistrationView(CreateView):
 
         messages.success(self.request, "Your account has been created successfully! You can now log in.")
         return response
+
+
+class BulkImportView(LoginRequiredMixin, View):
+    """View for bulk importing items to create a shopping list"""
+    template_name = 'groceries/bulk_import.html'
+    
+    def get(self, request):
+        form = BulkImportForm(user=request.user)
+        return render(request, self.template_name, {'form': form})
+    
+    def post(self, request):
+        form = BulkImportForm(request.POST, user=request.user)
+        
+        if form.is_valid():
+            # Parse the items text
+            items_text = form.cleaned_data['items_text']
+            parsed_items = parse_bulk_import_text(items_text)
+            
+            # Extract just the item names for fuzzy matching
+            item_names = [item['name'] for item in parsed_items]
+            
+            # Perform fuzzy matching
+            matching_results = fuzzy_match_items(item_names)
+            
+            # Store the form data and results in session for the next step
+            request.session['bulk_import_data'] = {
+                'name': form.cleaned_data['name'],
+                'family_id': form.cleaned_data['family'].id,
+                'store_id': form.cleaned_data['store'].id,
+                'parsed_items': parsed_items,
+                'matching_results': matching_results
+            }
+            
+            # If there are items that couldn't be matched, show the confirmation page
+            if matching_results['not_found']:
+                return redirect('groceries:bulk_import_confirm')
+            else:
+                # All items were matched, create the list directly
+                return self._create_shopping_list(request)
+        
+        return render(request, self.template_name, {'form': form})
+    
+    def _create_shopping_list(self, request):
+        """Create the shopping list with all matched items"""
+        bulk_data = request.session.get('bulk_import_data')
+        if not bulk_data:
+            messages.error(request, "Session expired. Please try again.")
+            return redirect('groceries:bulk_import')
+        
+        try:
+            # Create the shopping list
+            family = Family.objects.get(id=bulk_data['family_id'])
+            store = GroceryStore.objects.get(id=bulk_data['store_id'])
+            
+            shopping_list = ShoppingList.objects.create(
+                name=bulk_data['name'],
+                family=family,
+                store=store,
+                created_by=request.user
+            )
+            
+            # Add all matched items to the list
+            items_added = 0
+            for found_item in bulk_data['matching_results']['found']:
+                # Find the corresponding parsed item to get quantity and unit
+                parsed_item = next(
+                    (item for item in bulk_data['parsed_items'] 
+                     if item['name'] == found_item['input_name']), 
+                    None
+                )
+                
+                if parsed_item:
+                    grocery_item = GroceryItem.objects.get(id=found_item['matched_item']['id'])
+                    ShoppingListItem.objects.create(
+                        shopping_list=shopping_list,
+                        item=grocery_item,
+                        quantity=float(parsed_item['quantity']) if parsed_item['quantity'] else 1,
+                        unit=parsed_item['unit'],
+                        sort_order=items_added
+                    )
+                    items_added += 1
+            
+            # Clear session data
+            if 'bulk_import_data' in request.session:
+                del request.session['bulk_import_data']
+            
+            messages.success(request, f"Shopping list '{shopping_list.name}' created with {items_added} items!")
+            return redirect('groceries:list_detail', pk=shopping_list.pk)
+            
+        except Exception as e:
+            logger.error(f"Error creating bulk import list: {e}")
+            messages.error(request, "Error creating shopping list. Please try again.")
+            return redirect('groceries:bulk_import')
+
+
+class BulkImportConfirmView(LoginRequiredMixin, View):
+    """View for confirming bulk import with missing items"""
+    template_name = 'groceries/bulk_import_confirm.html'
+    
+    def get(self, request):
+        bulk_data = request.session.get('bulk_import_data')
+        if not bulk_data:
+            messages.error(request, "Session expired. Please try again.")
+            return redirect('groceries:bulk_import')
+        
+        context = {
+            'list_name': bulk_data['name'],
+            'found_items': bulk_data['matching_results']['found'],
+            'not_found_items': bulk_data['matching_results']['not_found'],
+            'categories': ProductCategory.objects.all().order_by('name')
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request):
+        bulk_data = request.session.get('bulk_import_data')
+        if not bulk_data:
+            messages.error(request, "Session expired. Please try again.")
+            return redirect('groceries:bulk_import')
+        
+        action = request.POST.get('action')
+        
+        if action == 'skip_missing':
+            # Create list with only found items
+            return self._create_shopping_list_found_only(request)
+        
+        elif action == 'create_missing':
+            # Create missing items first, then create the list
+            return self._create_missing_items_and_list(request)
+        
+        else:
+            return redirect('groceries:bulk_import_confirm')
+    
+    def _create_shopping_list_found_only(self, request):
+        """Create shopping list with only the found items"""
+        bulk_data = request.session.get('bulk_import_data')
+        
+        try:
+            family = Family.objects.get(id=bulk_data['family_id'])
+            store = GroceryStore.objects.get(id=bulk_data['store_id'])
+            
+            shopping_list = ShoppingList.objects.create(
+                name=bulk_data['name'],
+                family=family,
+                store=store,
+                created_by=request.user
+            )
+            
+            # Add only found items
+            items_added = 0
+            for found_item in bulk_data['matching_results']['found']:
+                parsed_item = next(
+                    (item for item in bulk_data['parsed_items'] 
+                     if item['name'] == found_item['input_name']), 
+                    None
+                )
+                
+                if parsed_item:
+                    grocery_item = GroceryItem.objects.get(id=found_item['matched_item']['id'])
+                    ShoppingListItem.objects.create(
+                        shopping_list=shopping_list,
+                        item=grocery_item,
+                        quantity=float(parsed_item['quantity']) if parsed_item['quantity'] else 1,
+                        unit=parsed_item['unit'],
+                        sort_order=items_added
+                    )
+                    items_added += 1
+            
+            # Clear session data
+            if 'bulk_import_data' in request.session:
+                del request.session['bulk_import_data']
+            
+            skipped_count = len(bulk_data['matching_results']['not_found'])
+            messages.success(
+                request, 
+                f"Shopping list '{shopping_list.name}' created with {items_added} items! "
+                f"{skipped_count} items were skipped."
+            )
+            return redirect('groceries:list_detail', pk=shopping_list.pk)
+            
+        except Exception as e:
+            logger.error(f"Error creating bulk import list (found only): {e}")
+            messages.error(request, "Error creating shopping list. Please try again.")
+            return redirect('groceries:bulk_import_confirm')
+    
+    def _create_missing_items_and_list(self, request):
+        """Create missing items and then create the shopping list"""
+        bulk_data = request.session.get('bulk_import_data')
+        
+        try:
+            family = Family.objects.get(id=bulk_data['family_id'])
+            store = GroceryStore.objects.get(id=bulk_data['store_id'])
+            
+            # Create missing items
+            created_items = []
+            for not_found_item in bulk_data['matching_results']['not_found']:
+                # Get category from form if provided
+                category_id = request.POST.get(f"category_{not_found_item['input_name']}")
+                category = None
+                if category_id:
+                    try:
+                        category = ProductCategory.objects.get(id=category_id)
+                    except ProductCategory.DoesNotExist:
+                        pass
+                
+                # Create the new grocery item
+                grocery_item = GroceryItem.objects.create(
+                    name=not_found_item['suggested_name'],
+                    category=category,
+                    created_by=request.user,
+                    is_user_added=True
+                )
+                created_items.append({
+                    'item': grocery_item,
+                    'input_name': not_found_item['input_name']
+                })
+            
+            # Create the shopping list
+            shopping_list = ShoppingList.objects.create(
+                name=bulk_data['name'],
+                family=family,
+                store=store,
+                created_by=request.user
+            )
+            
+            # Add all items (found + newly created)
+            items_added = 0
+            
+            # Add found items
+            for found_item in bulk_data['matching_results']['found']:
+                parsed_item = next(
+                    (item for item in bulk_data['parsed_items'] 
+                     if item['name'] == found_item['input_name']), 
+                    None
+                )
+                
+                if parsed_item:
+                    grocery_item = GroceryItem.objects.get(id=found_item['matched_item']['id'])
+                    ShoppingListItem.objects.create(
+                        shopping_list=shopping_list,
+                        item=grocery_item,
+                        quantity=float(parsed_item['quantity']) if parsed_item['quantity'] else 1,
+                        unit=parsed_item['unit'],
+                        sort_order=items_added
+                    )
+                    items_added += 1
+            
+            # Add newly created items
+            for created_item in created_items:
+                parsed_item = next(
+                    (item for item in bulk_data['parsed_items'] 
+                     if item['name'] == created_item['input_name']), 
+                    None
+                )
+                
+                if parsed_item:
+                    ShoppingListItem.objects.create(
+                        shopping_list=shopping_list,
+                        item=created_item['item'],
+                        quantity=float(parsed_item['quantity']) if parsed_item['quantity'] else 1,
+                        unit=parsed_item['unit'],
+                        sort_order=items_added
+                    )
+                    items_added += 1
+            
+            # Clear session data
+            if 'bulk_import_data' in request.session:
+                del request.session['bulk_import_data']
+            
+            messages.success(
+                request, 
+                f"Shopping list '{shopping_list.name}' created with {items_added} items! "
+                f"{len(created_items)} new items were created."
+            )
+            return redirect('groceries:list_detail', pk=shopping_list.pk)
+            
+        except Exception as e:
+            logger.error(f"Error creating bulk import list with new items: {e}")
+            messages.error(request, "Error creating shopping list. Please try again.")
+            return redirect('groceries:bulk_import_confirm')
+
 
 # We'll import store_utils in shop_smart/urls.py directly to avoid circular imports

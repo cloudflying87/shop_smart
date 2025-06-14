@@ -98,8 +98,8 @@ class FamilyAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
             member_count=Count('members'),
-            list_count=Count('shopping_lists'),
-            active_list_count=Count('shopping_lists', filter=Q(shopping_lists__completed=False))
+            list_count=Count('lists'),
+            active_list_count=Count('lists', filter=Q(lists__completed=False))
         )
     
     def display_members(self, obj):
@@ -150,7 +150,7 @@ class FamilyMemberAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
             lists_created=Count('user__created_lists'),
-            items_added=Count('user__created_items')
+            items_added=Count('user__groceryitem')
         )
     
     def lists_created(self, obj):
@@ -219,8 +219,8 @@ class GroceryStoreAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
             location_count=Count('locations'),
-            product_count=Count('item_info'),
-            list_count=Count('shopping_lists')
+            product_count=Count('itemstoreinfo'),
+            list_count=Count('lists')
         )
     
     def location_count(self, obj):
@@ -269,7 +269,7 @@ class StoreLocationAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
-            items_count=Count('item_store_infos')
+            items_count=Count('itemstoreinfo')
         )
     
     def items_count(self, obj):
@@ -338,7 +338,7 @@ class GroceryItemAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
-            times_used=Count('list_items'),
+            times_used=Count('shoppinglistitem'),
             avg_price=Avg('store_info__last_price')
         ).select_related('category', 'created_by')
     
@@ -417,7 +417,7 @@ class FamilyItemUsageAdmin(admin.ModelAdmin):
     
     def avg_quantity(self, obj):
         # Calculate average quantity from shopping list items
-        avg = obj.family.shopping_lists.filter(
+        avg = obj.family.lists.filter(
             items__item=obj.item
         ).aggregate(avg=Avg('items__quantity'))['avg']
         return f'{avg:.1f}' if avg else '-'
@@ -426,7 +426,7 @@ class FamilyItemUsageAdmin(admin.ModelAdmin):
     def frequency(self, obj):
         # Calculate purchase frequency
         if obj.usage_count > 1:
-            first_use = obj.family.shopping_lists.filter(
+            first_use = obj.family.lists.filter(
                 items__item=obj.item
             ).order_by('created_at').first()
             if first_use:
@@ -489,9 +489,9 @@ class ShoppingListAdmin(admin.ModelAdmin):
             color = 'green' if percentage == 100 else 'orange' if percentage > 50 else 'red'
             return format_html(
                 '<div style="width: 100px; background-color: #f0f0f0; border-radius: 4px;">'
-                '<div style="width: {}%; background-color: {}; color: white; text-align: center; border-radius: 4px;">'
-                '{:.0f}%</div></div>',
-                percentage, color, percentage
+                '<div style="width: {0}%; background-color: {1}; color: white; text-align: center; border-radius: 4px;">'
+                '{2}%</div></div>',
+                percentage, color, int(percentage)
             )
         return '-'
     progress.short_description = 'Progress'
