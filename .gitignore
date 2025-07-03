@@ -12,6 +12,7 @@ token.json
 savedfiles/
 pas/
 __pycache__
+staticfiles/
 db.sqlite3
 media
 _gsdata_
