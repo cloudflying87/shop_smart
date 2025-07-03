@@ -14,8 +14,8 @@ PROJECT_NAME="shop_smart"                                    # Your project name
 DB_NAME="shop_smart"                                     # Database name
 DB_USER="shop_smart_user"                                         # Database user
 REMOTE_SERVER="davidhale87@172.16.205.4"                  # Remote backup server
-REMOTE_BACKUP_DIR="/halefiles/Coding/ShopSmartDBBackups"  # Remote backup directory
-LOCAL_BACKUP_DIR="/Users/davidhale87/Coding/ShopSmartDBBackups"  # Local backup directory
+REMOTE_BACKUP_DIR="/halefiles/Coding/ShopSmartBackups"  # Remote backup directory
+LOCAL_BACKUP_DIR="/Users/davidhale87/Coding/ShopSmartBackups"  # Local backup directory
 
 # Container names - adjust based on your docker-compose.yml
 DB_CONTAINER="${PROJECT_NAME}-db-1"
